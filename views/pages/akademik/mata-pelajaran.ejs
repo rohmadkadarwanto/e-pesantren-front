@@ -1,0 +1,97 @@
+<%- include('../../partials/header') %>
+
+<div class="content-wrapper">
+  <div class="content-header">
+    <h1>Data Mata Pelajaran</h1>
+  </div>
+
+  <section class="content">
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-12">
+          <div class="card">
+            <div class="card-body">
+              <table id="dataTable" class="table table-bordered table-striped">
+                <thead>
+                  <tr>
+                    <th>Kode</th>
+                    <th>Nama</th>
+                    <th>Status</th>
+                    <th>Created At</th>
+                  </tr>
+                </thead>
+                <tbody id="tableBody">
+                  <!-- Table content will be dynamically generated here -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  // Fetch data from API
+  fetch('https://api.appschool.biz.id/api/mata-pelajaran')
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        populateTable(data.data);
+        initializeDataTable();
+      } else {
+        console.error('Failed to fetch data from API');
+      }
+    })
+    .catch(error => console.error('Error fetching data:', error));
+});
+
+function populateTable(mataPelajaranData) {
+  const tableBody = document.getElementById('tableBody');
+
+  // Clear existing table content
+  tableBody.innerHTML = '';
+
+  // Populate table with data
+  mataPelajaranData.forEach(mataPelajaran => {
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td>${mataPelajaran.code}</td>
+      <td>${mataPelajaran.name}</td>
+      <td>${mataPelajaran.status === 1 ? 'Aktif' : 'Tidak aktif'}</td>
+      <td>${formatDate(mataPelajaran.created_at)}</td>
+    `;
+
+    tableBody.appendChild(row);
+  });
+}
+
+function initializeDataTable() {
+  // Initialize DataTable with paging and limit
+  $("#dataTable").DataTable({
+    "paging": true,
+    "pageLength": 10,  // Set the default number of rows per page
+    "lengthMenu": [10, 25, 50, 100],  // Set available options for rows per page
+    "lengthChange": false,
+    "searching": false,
+    "ordering": true,
+    "info": true,
+    "autoWidth": false,
+    "responsive": true,
+    "buttons": ["copy", "csv", "excel", "pdf", "print", "colvis"]
+  }).buttons().container().appendTo('#example1_wrapper .col-md-6:eq(0)');
+}
+
+function formatDate(dateString) {
+  if (dateString) {
+    const options = { year: 'numeric', month: 'long', day: 'numeric' };
+    return new Date(dateString).toLocaleDateString('id-ID', options);
+  } else {
+    return '-';
+  }
+}
+</script>
+
+<%- include('../../partials/footer') %>

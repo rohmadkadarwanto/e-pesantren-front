@@ -1,0 +1,90 @@
+<%- include('../../partials/header') %>
+
+<div class="content-wrapper">
+  <div class="content-header">
+    <h1>Laporan Perubahan Modal</h1>
+  </div>
+
+  <section class="content">
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-12">
+          <div class="card">
+            <div class="card-body">
+              <table id="dataTable" class="table table-bordered table-striped">
+                <thead>
+                  <tr>
+                    <th>Jenis</th>
+                    <th>Nama Akun</th>
+                    <th>Nama Subakun</th>
+                    <th>Penambahan Modal</th>
+                    <th>Pengurangan Modal</th>
+                  </tr>
+                </thead>
+                <tbody id="tableBody">
+                  <!-- Table content will be dynamically generated here -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  // Fetch data from API
+  fetch('https://api.appschool.biz.id/api/transaksi/laporan/perubahan-modal')
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        populateTable(data.data);
+        initializeDataTable();
+      } else {
+        console.error('Failed to fetch data from API');
+      }
+    })
+    .catch(error => console.error('Error fetching data:', error));
+});
+
+function populateTable(perubahanModalData) {
+  const tableBody = document.getElementById('tableBody');
+
+  // Clear existing table content
+  tableBody.innerHTML = '';
+
+  // Populate table with data
+  perubahanModalData.forEach(item => {
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td>${item.jenis}</td>
+      <td>${item.account_name}</td>
+      <td>${item.subaccount_name}</td>
+      <td>${item.penambahan_modal}</td>
+      <td>${item.pengurangan_modal}</td>
+    `;
+
+    tableBody.appendChild(row);
+  });
+}
+
+function initializeDataTable() {
+  // Initialize DataTable with paging and limit
+  $("#dataTable").DataTable({
+    "paging": true,
+    "pageLength": 10,  // Set the default number of rows per page
+    "lengthMenu": [10, 25, 50, 100],  // Set available options for rows per page
+    "lengthChange": false,
+    "searching": false,
+    "ordering": true,
+    "info": true,
+    "autoWidth": false,
+    "responsive": true,
+    "buttons": ["copy", "csv", "excel", "pdf", "print", "colvis"]
+  }).buttons().container().appendTo('#example1_wrapper .col-md-6:eq(0)');
+}
+</script>
+
+<%- include('../../partials/footer') %>
