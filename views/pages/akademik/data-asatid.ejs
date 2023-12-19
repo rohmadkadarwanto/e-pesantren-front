@@ -11,17 +11,17 @@
         <div class="col-12">
           <div class="card">
             <div class="card-body">
-              <button class="btn btn-success mb-2" data-toggle="modal" data-target="#addAsatidModal">Tambah Asatid</button>
+              <button onclick="openCreateForm()" class="btn btn-success">Create Asatid</button>
               <table id="dataTable" class="table table-bordered table-striped">
                 <thead>
                   <tr>
                     <th>NIP</th>
                     <th>Nama</th>
                     <th>Email</th>
-                    <th>Telepon</th>
+                    <th>Phone</th>
                     <th>Alamat</th>
                     <th>Status</th>
-                    <th>Aksi</th>
+                    <th>Action</th>
                   </tr>
                 </thead>
                 <tbody id="tableBody">
@@ -36,24 +36,24 @@
   </section>
 </div>
 
-<!-- Add Asatid Modal -->
-<div class="modal fade" id="addAsatidModal" tabindex="-1" role="dialog" aria-labelledby="addAsatidModalLabel" aria-hidden="true">
+<!-- Create Form Modal -->
+<div class="modal fade" id="createFormModal" tabindex="-1" role="dialog" aria-labelledby="createFormModalLabel" aria-hidden="true">
   <div class="modal-dialog" role="document">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="addAsatidModalLabel">Tambah Asatid</h5>
+        <h5 class="modal-title" id="createFormModalLabel">Create Asatid</h5>
         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
       <div class="modal-body">
-        <form id="addAsatidForm">
+        <form id="createForm">
           <div class="form-group">
             <label for="nip">NIP:</label>
             <input type="text" class="form-control" id="nip" name="nip" required>
           </div>
           <div class="form-group">
-            <label for="name">Nama:</label>
+            <label for="name">Name:</label>
             <input type="text" class="form-control" id="name" name="name" required>
           </div>
           <div class="form-group">
@@ -61,49 +61,64 @@
             <input type="email" class="form-control" id="email" name="email" required>
           </div>
           <div class="form-group">
-            <label for="phone">Telepon:</label>
-            <input type="text" class="form-control" id="phone" name="phone" required>
+            <label for="phone">Phone:</label>
+            <input type="tel" class="form-control" id="phone" name="phone" required>
           </div>
           <div class="form-group">
-            <label for="address">Alamat:</label>
-            <textarea class="form-control" id="address" name="address" required></textarea>
+            <label for="address">Address:</label>
+            <input type="text" class="form-control" id="address" name="address" required>
           </div>
           <div class="form-group">
             <label for="status">Status:</label>
             <select class="form-control" id="status" name="status" required>
               <option value="1">Aktif</option>
-              <option value="0">Nonaktif</option>
+              <option value="0">Tidak aktif</option>
             </select>
           </div>
-          <button type="submit" class="btn btn-primary">Simpan</button>
+          <button type="submit" class="btn btn-primary">Create</button>
         </form>
       </div>
     </div>
   </div>
 </div>
 
-<!-- Update Asatid Modal -->
-<div class="modal fade" id="updateAsatidModal" tabindex="-1" role="dialog" aria-labelledby="updateAsatidModalLabel" aria-hidden="true">
-  <!-- Modal content is similar to Add Asatid Modal, but with pre-filled values -->
-
-  <!-- JavaScript code is provided separately -->
-</div>
-
 <script>
 document.addEventListener('DOMContentLoaded', () => {
   // Fetch data from API
-  fetch('https://api.appschool.biz.id/api/data-asatid')
+fetchData();
+
+});
+
+function fetchData() {
+  fetch('https://api.appschool.biz.id/api/asatid')
     .then(response => response.json())
     .then(data => {
       if (data.success) {
         populateTable(data.data);
-        initializeDataTable();
+        let initializeSantriDataTable = initializeDataTable(
+            "#dataTable",
+            {
+                "paging": true,
+                "pageLength": 10,
+                "lengthMenu": [10, 25, 50, 100],
+                "lengthChange": false,
+                "searching": true,
+                "ordering": true,
+                "info": true,
+                "autoWidth": false,
+                "responsive": true,
+                "buttons": ["copy", "csv", "excel", "pdf", "print", "colvis"]
+            },
+            '#example1_wrapper .col-md-6:eq(0)'
+        );
+
+
       } else {
         console.error('Failed to fetch data from API');
       }
     })
     .catch(error => console.error('Error fetching data:', error));
-});
+}
 
 function populateTable(asatidData) {
   const tableBody = document.getElementById('tableBody');
@@ -120,10 +135,9 @@ function populateTable(asatidData) {
       <td>${asatid.email}</td>
       <td>${asatid.phone}</td>
       <td>${asatid.address}</td>
-      <td>${asatid.status === 1 ? 'Aktif' : 'Nonaktif'}</td>
+      <td>${asatid.status === 1 ? 'Aktif' : 'Tidak aktif'}</td>
       <td>
-        <button class="btn btn-warning btn-sm" data-toggle="modal" data-target="#updateAsatidModal" onclick="openUpdateModal(${asatid.id})">Edit</button>
-        <button class="btn btn-danger btn-sm" onclick="deleteAsatid(${asatid.id})">Hapus</button>
+        <button onclick="deleteAsatid('${asatid.nip}')" class="btn btn-danger">Delete</button>
       </td>
     `;
 
@@ -131,154 +145,51 @@ function populateTable(asatidData) {
   });
 }
 
-function initializeDataTable() {
-  // Initialize DataTable with paging and limit
-  $("#dataTable").DataTable({
-    "paging": true,
-    "pageLength": 10,
-    "lengthMenu": [10, 25, 50, 100],
-    "lengthChange": false,
-    "searching": false,
-    "ordering": true,
-    "info": true,
-    "autoWidth": false,
-    "responsive": true,
-    "buttons": ["copy", "csv", "excel", "pdf", "print", "colvis"]
-  }).buttons().container().appendTo('#example1_wrapper .col-md-6:eq(0)');
+
+function openCreateForm() {
+  $('#createFormModal').modal('show');
 }
 
-document.getElementById('addAsatidForm').addEventListener('submit', function (event) {
-  event.preventDefault();
-  const formData = new FormData(this);
+document.getElementById('createForm').addEventListener('submit', function (e) {
+  e.preventDefault();
 
-  // Convert FormData to JSON
-  const json = {};
-  formData.forEach((value, key) => {
-    json[key] = value;
-  });
+  const form = e.target;
+  const formData = new FormData(form);
 
-  // Add or update data using API
-  fetch('https://api.appschool.biz.id/api/asatid/update/', {
+  fetch('https://api.appschool.biz.id/api/asatid/create', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify(json),
+    body: JSON.stringify(Object.fromEntries(formData)),
   })
     .then(response => response.json())
     .then(data => {
       if (data.success) {
-        // Refresh table data after successful operation
-        fetch('https://api.appschool.biz.id/api/asatid')
-          .then(response => response.json())
-          .then(data => {
-            if (data.success) {
-              populateTable(data.data);
-            } else {
-              console.error('Failed to fetch data from API');
-            }
-          })
-          .catch(error => console.error('Error fetching data:', error));
-
-        // Close the modal
-        $('#addAsatidModal').modal('hide');
+        fetchData(); // Refresh the table
+        $('#createFormModal').modal('hide');
       } else {
-        console.error('Failed to add or update data:', data.message);
+        console.error('Failed to create Asatid:', data.message);
       }
     })
-    .catch(error => console.error('Error adding or updating data:', error));
+    .catch(error => console.error('Error creating Asatid:', error));
 });
 
-function openUpdateModal(nip) {
-  // Fetch data for the selected Asatid
-  fetch(`https://api.appschool.biz.id/api/asatid/${nip}`)
-    .then(response => response.json())
-    .then(data => {
-      if (data.success) {
-        // Populate the update modal with data
-        const asatid = data.data;
-        document.getElementById('nip').value = asatid.nip;
-        document.getElementById('name').value = asatid.name;
-        document.getElementById('email').value = asatid.email;
-        document.getElementById('phone').value = asatid.phone;
-        document.getElementById('address').value = asatid.address;
-        document.getElementById('status').value = asatid.status;
-
-        // Show the update modal
-        $('#updateAsatidModal').modal('show');
-      } else {
-        console.error('Failed to fetch Asatid data:', data.message);
-      }
+function deleteAsatid(nip) {
+  if (confirm('Are you sure you want to delete this Asatid?')) {
+    fetch(`https://api.appschool.biz.id/api/asatid/delete/${nip}`, {
+      method: 'DELETE',
     })
-    .catch(error => console.error('Error fetching Asatid data:', error));
-}
-
-document.getElementById('updateAsatidForm').addEventListener('submit', function (event) {
-  event.preventDefault();
-  const formData = new FormData(this);
-
-  // Convert FormData to JSON
-  const json = {};
-  formData.forEach((value, key) => {
-    json[key] = value;
-  });
-
-  // Add or update data using API
-  fetch(`https://api.appschool.biz.id/api/asatid/update/${nip}`, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(json),
-  })
-    .then(response => response.json())
-    .then(data => {
-      if (data.success) {
-        // Refresh table data after successful operation
-        fetch('https://api.appschool.biz.id/api/asatid')
-          .then(response => response.json())
-          .then(data => {
-            if (data.success) {
-              populateTable(data.data);
-            } else {
-              console.error('Failed to fetch data from API');
-            }
-          })
-          .catch(error => console.error('Error fetching data:', error));
-
-        // Close the modal
-        $('#updateAsatidModal').modal('hide');
-      } else {
-        console.error('Failed to add or update data:', data.message);
-      }
-    })
-    .catch(error => console.error('Error adding or updating data:', error));
-});
-
-function deleteAsatid(asatidId) {
-  // Add or update data using API
-  fetch(`https://api.appschool.biz.id/api/asatid/delete/${asatidId}`, {
-    method: 'DELETE',
-  })
-    .then(response => response.json())
-    .then(data => {
-      if (data.success) {
-        // Refresh table data after successful operation
-        fetch('https://api.appschool.biz.id/api/asatid')
-          .then(response => response.json())
-          .then(data => {
-            if (data.success) {
-              populateTable(data.data);
-            } else {
-              console.error('Failed to fetch data from API');
-            }
-          })
-          .catch(error => console.error('Error fetching data:', error));
-      } else {
-        console.error('Failed to delete data:', data.message);
-      }
-    })
-    .catch(error => console.error('Error deleting data:', error));
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          fetchData(); // Refresh the table
+        } else {
+          console.error('Failed to delete Asatid:', data.message);
+        }
+      })
+      .catch(error => console.error('Error deleting Asatid:', error));
+  }
 }
 </script>
 

@@ -11,14 +11,15 @@
         <div class="col-12">
           <div class="card">
             <div class="card-body">
+              <button class="btn btn-success mb-2" data-toggle="modal" data-target="#addAccountModal">Tambah Account Utama</button>
               <table id="dataTable" class="table table-bordered table-striped">
                 <thead>
                   <tr>
-                    <th>Kode</th>
-                    <th>Nama</th>
-                    <th>Tipe</th>
-                    <th>Saldo Normal</th>
-                    <th>Created At</th>
+                    <th>Code</th>
+                    <th>Name</th>
+                    <th>Type</th>
+                    <th>Normal Balance</th>
+                    <th>Action</th> <!-- New column for delete action -->
                   </tr>
                 </thead>
                 <tbody id="tableBody">
@@ -33,7 +34,58 @@
   </section>
 </div>
 
+<!-- Add Account Utama Modal -->
+<div class="modal fade" id="addAccountModal" tabindex="-1" role="dialog" aria-labelledby="addAccountModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addAccountModalLabel">Tambah Account Utama</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form id="addAccountForm">
+          <div class="form-group">
+            <label for="code">Code:</label>
+            <input type="text" class="form-control" id="code" name="code" required>
+          </div>
+          <div class="form-group">
+            <label for="name">Name:</label>
+            <input type="text" class="form-control" id="name" name="name" required>
+          </div>
+          <div class="form-group">
+            <div class="mb-3">
+              <label for="type" class="form-label">Type:</label>
+              <select id="type" name="type" class="form-select form-control" required>
+                <option value="Aset">Aset</option>
+                <option value="Kewajiban">Kewajiban</option>
+                <option value="Ekuitas">Ekuitas</option>
+                <option value="Pendapatan">Pendapatan</option>
+                <option value="Beban">Beban</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <div class="mb-3">
+              <label for="normal_balance" class="form-label">Normal Balance:</label>
+              <select id="normal_balance" name="normal_balance" class="form-select form-control" required>
+                <option value="Debit">Debit</option>
+                <option value="Credit">Credit</option>
+              </select>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary">Simpan</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
+
 document.addEventListener('DOMContentLoaded', () => {
   // Fetch data from API
   fetch('https://api.appschool.biz.id/api/coa-account')
@@ -49,21 +101,23 @@ document.addEventListener('DOMContentLoaded', () => {
     .catch(error => console.error('Error fetching data:', error));
 });
 
-function populateTable(accountUtamaData) {
+function populateTable(accountData) {
   const tableBody = document.getElementById('tableBody');
 
   // Clear existing table content
   tableBody.innerHTML = '';
 
   // Populate table with data
-  accountUtamaData.forEach(accountUtama => {
+  accountData.forEach(account => {
     const row = document.createElement('tr');
     row.innerHTML = `
-      <td>${accountUtama.code}</td>
-      <td>${accountUtama.name}</td>
-      <td>${accountUtama.type}</td>
-      <td>${accountUtama.normal_balance}</td>
-      <td>${formatDate(accountUtama.created_at)}</td>
+      <td>${account.code}</td>
+      <td>${account.name}</td>
+      <td>${account.type}</td>
+      <td>${account.normal_balance}</td>
+      <td>
+        <button class="btn btn-danger" onclick="deleteAccount(${account.id})">Delete</button>
+      </td>
     `;
 
     tableBody.appendChild(row);
@@ -74,8 +128,8 @@ function initializeDataTable() {
   // Initialize DataTable with paging and limit
   $("#dataTable").DataTable({
     "paging": true,
-    "pageLength": 10,  // Set the default number of rows per page
-    "lengthMenu": [10, 25, 50, 100],  // Set available options for rows per page
+    "pageLength": 10,
+    "lengthMenu": [10, 25, 50, 100],
     "lengthChange": false,
     "searching": false,
     "ordering": true,
@@ -86,13 +140,70 @@ function initializeDataTable() {
   }).buttons().container().appendTo('#example1_wrapper .col-md-6:eq(0)');
 }
 
-function formatDate(dateString) {
-  if (dateString) {
-    const options = { year: 'numeric', month: 'long', day: 'numeric' };
-    return new Date(dateString).toLocaleDateString('id-ID', options);
-  } else {
-    return '-';
-  }
+document.getElementById('addAccountForm').addEventListener('submit', function (event) {
+  event.preventDefault();
+  const formData = new FormData(this);
+
+  // Convert FormData to JSON
+  const json = Array.from(formData.entries()).reduce((acc, [key, value]) => {
+    acc[key] = value;
+    return acc;
+  }, {});
+
+  // Add data using API
+  fetch('https://api.appschool.biz.id/api/coa-account/create', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(json),
+  })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        // Refresh table data after successful operation
+        fetch('https://api.appschool.biz.id/api/coa-account')
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              populateTable(data.data);
+            } else {
+              console.error('Failed to fetch data from API');
+            }
+          })
+          .catch(error => console.error('Error fetching data:', error));
+        // Close the modal
+        $('#addAccountModal').modal('hide');
+      } else {
+        console.error('Failed to add data:', data.message);
+      }
+    })
+    .catch(error => console.error('Error adding data:', error));
+});
+
+function deleteAccount(accountId) {
+  fetch(`https://api.appschool.biz.id/api/coa-account/delete/${accountId}`, {
+    method: 'DELETE',
+  })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        // Refresh table with updated data
+        fetch('https://api.appschool.biz.id/api/coa-account')
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              populateTable(data.data);
+            } else {
+              console.error('Failed to fetch data from API');
+            }
+          })
+          .catch(error => console.error('Error fetching data:', error));
+      } else {
+        console.error('Failed to delete account:', data.message);
+      }
+    })
+    .catch(error => console.error('Error deleting account:', error));
 }
 </script>
 

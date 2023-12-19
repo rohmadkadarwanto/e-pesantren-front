@@ -11,11 +11,13 @@
         <div class="col-12">
           <div class="card">
             <div class="card-body">
+              <button onclick="openCreateForm()" class="btn btn-success">Create Kelas</button>
               <table id="dataTable" class="table table-bordered table-striped">
                 <thead>
                   <tr>
                     <th>Nama Kelas</th>
                     <th>Nama Lembaga</th>
+                    <th>Action</th>
                   </tr>
                 </thead>
                 <tbody id="tableBody">
@@ -30,23 +32,110 @@
   </section>
 </div>
 
+<!-- Create Form Modal -->
+<div class="modal fade" id="createFormModal" tabindex="-1" role="dialog" aria-labelledby="createFormModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="createFormModalLabel">Create Kelas</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form id="createForm">
+          <div class="form-group">
+            <label for="kelas_name">Nama Kelas:</label>
+            <input type="text" class="form-control" id="kelas_name" name="name" required>
+          </div>
+          <div class="form-group">
+            <label for="lembaga">Lembaga:</label>
+            <select class="form-control" id="lembaga" name="lembaga" required>
+              <!-- Lembaga options will be dynamically generated here -->
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="status">Status:</label>
+            <select class="form-control" id="status" name="status" required>
+              <option value="1">Aktif</option>
+              <option value="0">Tidak aktif</option>
+            </select>
+          </div>
+          <button type="submit" class="btn btn-primary">Create</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 document.addEventListener('DOMContentLoaded', () => {
   // Fetch data from API
+  fetchKelasData();
+  // Fetch Lembaga data for select options
+  fetchLembagaData();
+});
+
+function fetchKelasData() {
   fetch('https://api.appschool.biz.id/api/kelas')
     .then(response => response.json())
     .then(data => {
       if (data.success) {
-        populateTable(data.data);
-        initializeDataTable();
+        populateKelasTable(data.data);
+
+        let initializeSantriDataTable = initializeDataTable(
+            "#dataTable",
+            {
+                "paging": true,
+                "pageLength": 10,
+                "lengthMenu": [10, 25, 50, 100],
+                "lengthChange": false,
+                "searching": true,
+                "ordering": true,
+                "info": true,
+                "autoWidth": false,
+                "responsive": true,
+                "buttons": ["copy", "csv", "excel", "pdf", "print", "colvis"]
+            },
+            '#example1_wrapper .col-md-6:eq(0)'
+        );
+
       } else {
         console.error('Failed to fetch data from API');
       }
     })
     .catch(error => console.error('Error fetching data:', error));
-});
+}
 
-function populateTable(kelasData) {
+function fetchLembagaData() {
+  fetch('https://api.appschool.biz.id/api/lembaga')
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        populateLembagaOptions(data.data);
+      } else {
+        console.error('Failed to fetch Lembaga data from API');
+      }
+    })
+    .catch(error => console.error('Error fetching Lembaga data:', error));
+}
+
+function populateLembagaOptions(lembagaData) {
+  const lembagaSelect = document.getElementById('lembaga');
+
+  // Clear existing options
+  lembagaSelect.innerHTML = '';
+
+  // Populate select with options
+  lembagaData.forEach(lembaga => {
+    const option = document.createElement('option');
+    option.value = lembaga.code;
+    option.textContent = lembaga.name;
+    lembagaSelect.appendChild(option);
+  });
+}
+
+function populateKelasTable(kelasData) {
   const tableBody = document.getElementById('tableBody');
 
   // Clear existing table content
@@ -58,26 +147,61 @@ function populateTable(kelasData) {
     row.innerHTML = `
       <td>${kelas.kelas_name}</td>
       <td>${kelas.lembaga_name}</td>
+      <td>
+        <button onclick="deleteKelas('${kelas.id}')" class="btn btn-danger">Delete</button>
+      </td>
     `;
 
     tableBody.appendChild(row);
   });
+
+
 }
 
-function initializeDataTable() {
-  // Initialize DataTable with paging and limit
-  $("#dataTable").DataTable({
-    "paging": true,
-    "pageLength": 10,  // Set the default number of rows per page
-    "lengthMenu": [10, 25, 50, 100],  // Set available options for rows per page
-    "lengthChange": false,
-    "searching": false,
-    "ordering": true,
-    "info": true,
-    "autoWidth": false,
-    "responsive": true,
-    "buttons": ["copy", "csv", "excel", "pdf", "print", "colvis"]
-  }).buttons().container().appendTo('#example1_wrapper .col-md-6:eq(0)');
+function openCreateForm() {
+  $('#createFormModal').modal('show');
+}
+
+document.getElementById('createForm').addEventListener('submit', function (e) {
+  e.preventDefault();
+
+  const form = e.target;
+  const formData = new FormData(form);
+
+  fetch('https://api.appschool.biz.id/api/kelas/create', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(Object.fromEntries(formData)),
+  })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        fetchKelasData(); // Refresh the table
+        $('#createFormModal').modal('hide');
+      } else {
+        console.error('Failed to create Kelas:', data.message);
+      }
+    })
+    .catch(error => console.error('Error creating Kelas:', error));
+});
+
+function deleteKelas(id) {
+  if (confirm('Are you sure you want to delete this Kelas?')) {
+    fetch(`https://api.appschool.biz.id/api/kelas/delete/${id}`, {
+      method: 'DELETE',
+    })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          fetchKelasData(); // Refresh the table
+        } else {
+          console.error('Failed to delete Kelas:', data.message);
+        }
+      })
+      .catch(error => console.error('Error deleting Kelas:', error));
+  }
 }
 </script>
 
