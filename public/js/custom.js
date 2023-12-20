@@ -1,3 +1,28 @@
+const apiKey = 'f88fccc6204c03bf05fda50c698282e5'; // Ganti dengan API key yang sesuai
+const code = '00001'; // Ganti dengan API key yang sesuai
+
+
+function getCodeClientByApiKey(apiKey){
+  // Fetch client data from the endpoint and populate the form
+  fetch(`http://localhost:3000/api/client/${code}`) // Replace 'your_package_id' with the actual package ID
+      .then(response => response.json())
+      .then(data => {
+          if (data.success && data.count > 0) {
+              const clientData = data.data[0];
+          } else {
+              console.error('Failed to fetch client data:', data.message || 'Unknown error');
+              // Handle failure to fetch data
+          }
+      })
+      .catch(error => {
+          console.error('Error fetching client data:', error);
+          // Handle errors, e.g., show a general error message
+      });
+
+      return clientData;
+}
+
+
 function formatDate(dateString) {
   if (dateString) {
     const options = { year: 'numeric', month: 'long', day: 'numeric' };
