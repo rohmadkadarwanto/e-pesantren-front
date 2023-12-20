@@ -11,12 +11,14 @@
         <div class="col-12">
           <div class="card">
             <div class="card-body">
+              <button onclick="openCreateForm()" class="btn btn-success">Create Lembaga</button>
               <table id="dataTable" class="table table-bordered table-striped">
                 <thead>
                   <tr>
                     <th>Kode</th>
                     <th>Nama</th>
                     <th>Created At</th>
+                    <th>Action</th>
                   </tr>
                 </thead>
                 <tbody id="tableBody">
@@ -31,23 +33,50 @@
   </section>
 </div>
 
+<!-- Create Form Modal -->
+<div class="modal fade" id="createFormModal" tabindex="-1" role="dialog" aria-labelledby="createFormModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="createFormModalLabel">Create Lembaga</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form id="createForm">
+          <div class="form-group">
+            <label for="name">Nama:</label>
+            <input type="text" class="form-control" id="name" name="name" required>
+          </div>
+          <button type="submit" class="btn btn-primary">Create</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 document.addEventListener('DOMContentLoaded', () => {
   // Fetch data from API
+  fetchLembagaData();
+});
+
+function fetchLembagaData() {
   fetch('https://api.appschool.biz.id/api/lembaga')
     .then(response => response.json())
     .then(data => {
       if (data.success) {
-        populateTable(data.data);
+        populateLembagaTable(data.data);
         initializeDataTable();
       } else {
         console.error('Failed to fetch data from API');
       }
     })
     .catch(error => console.error('Error fetching data:', error));
-});
+}
 
-function populateTable(lembagaData) {
+function populateLembagaTable(lembagaData) {
   const tableBody = document.getElementById('tableBody');
 
   // Clear existing table content
@@ -60,6 +89,9 @@ function populateTable(lembagaData) {
       <td>${lembaga.code}</td>
       <td>${lembaga.name}</td>
       <td>${formatDate(lembaga.created_at)}</td>
+      <td>
+        <button onclick="deleteLembaga('${lembaga.code}')" class="btn btn-danger">Delete</button>
+      </td>
     `;
 
     tableBody.appendChild(row);
@@ -82,12 +114,49 @@ function initializeDataTable() {
   }).buttons().container().appendTo('#example1_wrapper .col-md-6:eq(0)');
 }
 
-function formatDate(dateString) {
-  if (dateString) {
-    const options = { year: 'numeric', month: 'long', day: 'numeric' };
-    return new Date(dateString).toLocaleDateString('id-ID', options);
-  } else {
-    return '-';
+function openCreateForm() {
+  $('#createFormModal').modal('show');
+}
+
+document.getElementById('createForm').addEventListener('submit', function (e) {
+  e.preventDefault();
+
+  const form = e.target;
+  const formData = new FormData(form);
+
+  fetch('https://api.appschool.biz.id/api/lembaga/create', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(Object.fromEntries(formData)),
+  })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        fetchLembagaData(); // Refresh the table
+        $('#createFormModal').modal('hide');
+      } else {
+        console.error('Failed to create Lembaga:', data.message);
+      }
+    })
+    .catch(error => console.error('Error creating Lembaga:', error));
+});
+
+function deleteLembaga(code) {
+  if (confirm('Are you sure you want to delete this Lembaga?')) {
+    fetch(`https://api.appschool.biz.id/api/lembaga/delete/${code}`, {
+      method: 'DELETE',
+    })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          fetchLembagaData(); // Refresh the table
+        } else {
+          console.error('Failed to delete Lembaga:', data.message);
+        }
+      })
+      .catch(error => console.error('Error deleting Lembaga:', error));
   }
 }
 </script>

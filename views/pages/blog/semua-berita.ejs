@@ -14,11 +14,12 @@
               <table id="dataTable" class="table table-bordered table-striped">
                 <thead>
                   <tr>
-                    <th>Gambar</th>
+                    <th style="width: 100px;">Gambar</th>
                     <th>Judul</th>
                     <th>Tipe</th>
                     <th>Status</th>
                     <th>Tanggal Dibuat</th>
+                    <th>Action</th>
                   </tr>
                 </thead>
                 <tbody id="tableBody">
@@ -59,11 +60,14 @@ function populateTable(beritaData) {
   beritaData.forEach(berita => {
     const row = document.createElement('tr');
     row.innerHTML = `
-      <td><img src='https://api.appschool.biz.id/uploads/${berita.images}'></td>
+      <td><img src='https://api.appschool.biz.id/img/${berita.images}' class="img-fluid pad"></td>
       <td>${berita.title}</td>
       <td>${berita.type}</td>
       <td>${berita.status === 1 ? 'Aktif' : 'Tidak aktif'}</td>
       <td>${formatDate(berita.created_at)}</td>
+      <td>
+        <button onclick="deleteBerita(${berita.id})" class="btn btn-danger">Delete</button>
+      </td>
     `;
 
     tableBody.appendChild(row);
@@ -89,6 +93,33 @@ function initializeDataTable() {
 function formatDate(dateString) {
   const options = { year: 'numeric', month: 'long', day: 'numeric' };
   return new Date(dateString).toLocaleDateString('id-ID', options);
+}
+
+function deleteBerita(id) {
+  if (confirm('Are you sure you want to delete this Berita?')) {
+    fetch(`https://api.appschool.biz.id/api/news/delete/${id}`, {
+      method: 'DELETE',
+    })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          // Refresh the table after successful deletion
+          fetch('https://api.appschool.biz.id/api/news')
+            .then(response => response.json())
+            .then(data => {
+              if (data.success) {
+                populateTable(data.data);
+              } else {
+                console.error('Failed to fetch data from API after deletion');
+              }
+            })
+            .catch(error => console.error('Error fetching data after deletion:', error));
+        } else {
+          console.error('Failed to delete Berita:', data.message);
+        }
+      })
+      .catch(error => console.error('Error deleting Berita:', error));
+  }
 }
 </script>
 
