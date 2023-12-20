@@ -8,7 +8,7 @@
     <div class="container-fluid">
       <form id="newsForm">
         <div class="row">
-          <div class="col-md-8 mx-auto mt-5">
+          <div class="col-md-8 mx-auto">
             <div class="card">
               <div class="card-body">
                 <div class="mb-3">
@@ -24,7 +24,7 @@
             </div>
           </div>
 
-          <div class="col-md-4 mx-auto mt-5">
+          <div class="col-md-4 mx-auto">
             <div class="card">
               <div class="card-body">
                 <div class="mb-3">
@@ -66,7 +66,6 @@
     const formData = new FormData(form);
 
     try {
-      const apiKey = 'f88fccc6204c03bf05fda50c698282e5'; // Ganti dengan API key yang sesuai
       const response = await fetch('https://api.appschool.biz.id/api/news/create', {
         method: 'POST', // Ganti dengan 'PUT' jika Anda ingin melakukan pembaruan (update)
         body: formData,

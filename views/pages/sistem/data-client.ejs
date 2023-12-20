@@ -9,7 +9,39 @@
         <div class="col-12">
           <div class="card">
             <div class="card-body">
+              <form id="updateClientForm">
+                <div class="mb-3">
+                  <label for="name" class="form-label">Name</label>
+                  <input type="text" class="form-control" id="name" name="name" placeholder="Enter name" required>
+                </div>
 
+                <div class="mb-3">
+                  <label for="email" class="form-label">Email</label>
+                  <input type="email" class="form-control" id="email" name="email" placeholder="Enter email" required>
+                </div>
+
+                <div class="mb-3">
+                  <label for="phone" class="form-label">Phone</label>
+                  <input type="tel" class="form-control" id="phone" name="phone" placeholder="Enter phone" required>
+                </div>
+
+                <div class="mb-3">
+                  <label for="website" class="form-label">Website</label>
+                  <input type="url" class="form-control" id="website" name="website" placeholder="Enter website" required>
+                </div>
+
+                <div class="mb-3">
+                  <label for="logo" class="form-label">Logo</label>
+                  <input type="file" class="form-control" id="logo" name="logo" accept="image/*" required>
+                </div>
+
+                <div class="mb-3">
+                  <label for="address" class="form-label">Address</label>
+                  <textarea class="form-control" id="address" name="address" placeholder="Enter address" rows="3" required></textarea>
+                </div>
+
+                <button type="button" class="btn btn-primary" onclick="handleUpdateClient()">Submit</button>
+              </form>
             </div>
           </div>
         </div>
@@ -17,5 +49,85 @@
     </div>
   </section>
 </div>
+<script>
+  
 
+  function serializeFormToJson(form) {
+    const formData = new FormData(form);
+    const jsonData = {};
+    formData.forEach((value, key) => {
+      jsonData[key] = value;
+    });
+    return JSON.stringify(jsonData);
+  }
+
+  // Fetch client data from the endpoint and populate the form
+  fetch(`https://api.appschool.biz.id/api/client/${code}`)
+    .then(response => response.json())
+    .then(data => {
+      if (data.success && data.count > 0) {
+        const clientData = data.data[0];
+        populateForm(clientData);
+      } else {
+        console.error('Failed to fetch client data:', data.message || 'Unknown error');
+        // Handle failure to fetch data
+      }
+    })
+    .catch(error => {
+      console.error('Error fetching client data:', error);
+      // Handle errors, e.g., show a general error message
+    });
+
+  function populateForm(clientData) {
+    document.getElementById('name').value = clientData.client_name || '';
+    document.getElementById('email').value = clientData.email || '';
+    document.getElementById('phone').value = clientData.phone || '';
+    document.getElementById('website').value = clientData.website || '';
+    document.getElementById('address').value = clientData.address || '';
+  }
+
+  function handleUpdateClient() {
+    const form = document.getElementById('updateClientForm');
+    const jsonData = serializeFormToJson(form);
+
+    fetch(`http://localhost:3000/api/client/update/${code}`, {
+      method: 'POST',
+      body: jsonData,
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+      },
+    })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          fetch(`https://api.appschool.biz.id/api/client/${code}`)
+            .then(response => response.json())
+            .then(data => {
+              if (data.success && data.count > 0) {
+                const clientData = data.data[0];
+                populateForm(clientData);
+              } else {
+                console.error('Failed to fetch client data:', data.message || 'Unknown error');
+                // Handle failure to fetch data
+              }
+            })
+            .catch(error => {
+              console.error('Error fetching client data:', error);
+              // Handle errors, e.g., show a general error message
+            });
+
+          console.log('Client data updated successfully:', data);
+          // Handle success, e.g., show a success message
+        } else {
+          console.error('Failed to update client data:', data.message || 'Unknown error');
+          // Handle failure, e.g., show an error message
+        }
+      })
+      .catch(error => {
+        console.error('Error updating client data:', error);
+        // Handle errors, e.g., show a general error message
+      });
+  }
+</script>
 <%- include('../../partials/footer') %>
