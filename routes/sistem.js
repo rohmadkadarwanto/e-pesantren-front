@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
 
-router.get('/pengguna/data-pengguna', (req, res) => {
-  res.render('pages/sistem/pengguna/data-pengguna');
+router.get('/data-client', (req, res) => {
+  res.render('pages/sistem/data-client');
 });
 
 router.get('/pengguna/permission', (req, res) => {

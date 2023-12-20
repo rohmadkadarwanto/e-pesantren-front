@@ -21,6 +21,10 @@ router.get('/lembaga', (req, res) => {
   res.render('pages/akademik/lembaga');
 });
 
+router.get('/jadwal', (req, res) => {
+  res.render('pages/akademik/jadwal');
+});
+
 router.get('/laporan-santri', (req, res) => {
   res.render('pages/akademik/laporan-santri');
 });
