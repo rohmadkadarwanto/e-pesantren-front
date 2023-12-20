@@ -1,0 +1,238 @@
+<%- include('../../partials/header') %>
+
+<div class="content-wrapper">
+  <div class="content-header">
+    <h1>Data Santri</h1>
+  </div>
+
+  <section class="content">
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-12">
+          <div class="card">
+            <div class="card-body">
+              <button onclick="openCreateForm()" class="btn btn-success">Create Santri</button>
+              <table id="dataTable" class="table table-bordered table-striped">
+                <thead>
+                  <tr>
+                    <th>NIS</th>
+                    <th>Nama</th>
+                    <th>Tempat Lahir</th>
+                    <th>Tanggal Lahir</th>
+                    <th>Alamat</th>
+                    <th>Status</th>
+                    <th>Ayah</th>
+                    <th>Ibu</th>
+                    <th>Wali</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="tableBody">
+                  <!-- Table content will be dynamically generated here -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- Create Form Modal -->
+<div class="modal fade" id="createFormModal" tabindex="-1" role="dialog" aria-labelledby="createFormModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="createFormModalLabel">Create Santri</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form id="createForm">
+          <div class="form-group">
+            <label for="nis">NIS:</label>
+            <input type="text" class="form-control" id="nis" name="nis" required>
+          </div>
+          <div class="form-group">
+            <label for="name">Name:</label>
+            <input type="text" class="form-control" id="name" name="name" required>
+          </div>
+          <div class="form-group">
+            <label for="tmp_lahir">Tempat Lahir:</label>
+            <input type="text" class="form-control" id="tmp_lahir" name="tmp_lahir" required>
+          </div>
+          <div class="form-group">
+            <label for="tgl_lahir">Tanggal Lahir:</label>
+            <input type="date" class="form-control" id="tgl_lahir" name="tgl_lahir" required>
+          </div>
+          <div class="form-group">
+            <label for="address">Address:</label>
+            <input type="text" class="form-control" id="address" name="address" required>
+          </div>
+          <div class="form-group">
+            <label for="status">Status:</label>
+            <select class="form-control" id="status" name="status" required>
+              <option value="1">Aktif</option>
+              <option value="0">Tidak aktif</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="ayah_nama">Nama Ayah:</label>
+            <input type="text" class="form-control" id="ayah_nama" name="ayah_nama" required>
+          </div>
+          <div class="form-group">
+            <label for="ayah_pekerjaan">Pekerjaan Ayah:</label>
+            <input type="text" class="form-control" id="ayah_pekerjaan" name="ayah_pekerjaan" required>
+          </div>
+          <div class="form-group">
+            <label for="ayah_alamat">Alamat Ayah:</label>
+            <input type="text" class="form-control" id="ayah_alamat" name="ayah_alamat" required>
+          </div>
+          <div class="form-group">
+            <label for="ibu_nama">Nama Ibu:</label>
+            <input type="text" class="form-control" id="ibu_nama" name="ibu_nama" required>
+          </div>
+          <div class="form-group">
+            <label for="ibu_pekerjaan">Pekerjaan Ibu:</label>
+            <input type="text" class="form-control" id="ibu_pekerjaan" name="ibu_pekerjaan" required>
+          </div>
+          <div class="form-group">
+            <label for="ibu_alamat">Alamat Ibu:</label>
+            <input type="text" class="form-control" id="ibu_alamat" name="ibu_alamat" required>
+          </div>
+          <div class="form-group">
+            <label for="wali_nama">Nama Wali:</label>
+            <input type="text" class="form-control" id="wali_nama" name="wali_nama" required>
+          </div>
+          <div class="form-group">
+            <label for="wali_pekerjaan">Pekerjaan Wali:</label>
+            <input type="text" class="form-control" id="wali_pekerjaan" name="wali_pekerjaan" required>
+          </div>
+          <div class="form-group">
+            <label for="wali_alamat">Alamat Wali:</label>
+            <input type="text" class="form-control" id="wali_alamat" name="wali_alamat" required>
+          </div>
+          <button type="submit" class="btn btn-primary">Create</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  // Fetch data from API
+  fetchSantriData();
+});
+
+function fetchSantriData() {
+  fetch('https://api.appschool.biz.id/api/santri')
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        populateSantriTable(data.data);
+
+        let initializeSantriDataTable = initializeDataTable(
+            "#dataTable",
+            {
+                "paging": true,
+                "pageLength": 10,
+                "lengthMenu": [10, 25, 50, 100],
+                "lengthChange": false,
+                "searching": true,
+                "ordering": true,
+                "info": true,
+                "autoWidth": false,
+                "responsive": true,
+                "buttons": ["copy", "csv", "excel", "pdf", "print", "colvis"]
+            },
+            '#example1_wrapper .col-md-6:eq(0)'
+        );
+
+      } else {
+        console.error('Failed to fetch data from API');
+      }
+    })
+    .catch(error => console.error('Error fetching data:', error));
+}
+
+function populateSantriTable(santriData) {
+  const tableBody = document.getElementById('tableBody');
+
+  // Clear existing table content
+  tableBody.innerHTML = '';
+
+  // Populate table with data
+  santriData.forEach(santri => {
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td>${santri.nis}</td>
+      <td>${santri.name}</td>
+      <td>${santri.tmp_lahir}</td>
+      <td>${formatDate(santri.tgl_lahir)}</td>
+      <td>${santri.address}</td>
+      <td>${santri.status === 1 ? 'Aktif' : 'Tidak aktif'}</td>
+      <td>${getFamilyInfo(santri.ayah_santri)}</td>
+      <td>${getFamilyInfo(santri.ibu_santri)}</td>
+      <td>${getFamilyInfo(santri.wali_santri)}</td>
+      <td>
+        <button onclick="deleteSantri('${santri.nis}')" class="btn btn-danger">Delete</button>
+      </td>
+    `;
+
+    tableBody.appendChild(row);
+  });
+}
+
+
+
+function openCreateForm() {
+  $('#createFormModal').modal('show');
+}
+
+document.getElementById('createForm').addEventListener('submit', function (e) {
+  e.preventDefault();
+
+  const form = e.target;
+  const formData = new FormData(form);
+
+  fetch('https://api.appschool.biz.id/api/santri/create', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(Object.fromEntries(formData)),
+  })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        fetchSantriData(); // Refresh the table
+        $('#createFormModal').modal('hide');
+      } else {
+        console.error('Failed to create Santri:', data.message);
+      }
+    })
+    .catch(error => console.error('Error creating Santri:', error));
+});
+
+function deleteSantri(nis) {
+  if (confirm('Are you sure you want to delete this Santri?')) {
+    fetch(`https://api.appschool.biz.id/api/santri/delete/${nis}`, {
+      method: 'DELETE',
+    })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          fetchSantriData(); // Refresh the table
+        } else {
+          console.error('Failed to delete Santri:', data.message);
+        }
+      })
+      .catch(error => console.error('Error deleting Santri:', error));
+  }
+}
+</script>
+
+<%- include('../../partials/footer') %>
