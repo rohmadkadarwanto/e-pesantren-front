@@ -14,9 +14,8 @@
 
             <div class="info-box-content">
               <span class="info-box-text">Santri</span>
-              <span class="info-box-number">
-                10
-                <small>%</small>
+              <span class="info-box-number" id="jumlah-santri">
+                Loading...
               </span>
             </div>
             <!-- /.info-box-content -->
@@ -30,7 +29,9 @@
 
             <div class="info-box-content">
               <span class="info-box-text">Asatid</span>
-              <span class="info-box-number">41,410</span>
+              <span class="info-box-number" id="jumlah-asatid">
+                Loading...
+              </span>
             </div>
             <!-- /.info-box-content -->
           </div>
@@ -47,7 +48,9 @@
 
             <div class="info-box-content">
               <span class="info-box-text">Kelas</span>
-              <span class="info-box-number">760</span>
+              <span class="info-box-number" id="jumlah-kelas">
+                Loading...
+              </span>
             </div>
             <!-- /.info-box-content -->
           </div>
@@ -60,7 +63,9 @@
 
             <div class="info-box-content">
               <span class="info-box-text">Berita</span>
-              <span class="info-box-number">2,000</span>
+              <span class="info-box-number" id="jumlah-berita">
+                Loading...
+              </span>
             </div>
             <!-- /.info-box-content -->
           </div>
@@ -129,7 +134,33 @@ document.addEventListener('DOMContentLoaded', () => {
   fetchDataAndCreateChart('https://api.appschool.biz.id/api/transaksi/laporan/arus-kas', createArusKasChart);
   fetchDataAndCreateChart('https://api.appschool.biz.id/api/transaksi/laporan/laba-rugi', createLabaRugiChart);
   fetchDataAndCreateChart('https://api.appschool.biz.id/api/transaksi/laporan/perubahan-modal', createPerubahanModalChart);
+
+  fetchDataAndCreateChart('https://api.appschool.biz.id/api/santri', countSantri);
+  fetchDataAndCreateChart('https://api.appschool.biz.id/api/asatid', countAsatid);
+  fetchDataAndCreateChart('https://api.appschool.biz.id/api/kelas', countKelas);
+  fetchDataAndCreateChart('https://api.appschool.biz.id/api/news', countBerita);
 });
+
+
+function countSantri(data){
+  const countSantri = document.getElementById('jumlah-santri');
+  countSantri.innerHTML = Array.isArray(data) ? data.length : Object.keys(data).length;
+}
+
+function countAsatid(data){
+  const countAsatid = document.getElementById('jumlah-asatid');
+  countAsatid.innerHTML = Array.isArray(data) ? data.length : Object.keys(data).length;
+}
+
+function countKelas(data){
+  const countKelas = document.getElementById('jumlah-kelas');
+  countKelas.innerHTML = Array.isArray(data) ? data.length : Object.keys(data).length;
+}
+
+function countBerita(data){
+  const countBerita = document.getElementById('jumlah-berita');
+  countBerita.innerHTML = Array.isArray(data) ? data.length : Object.keys(data).length;
+}
 
 function fetchDataAndCreateChart(url, chartCreator) {
   fetch(url)
