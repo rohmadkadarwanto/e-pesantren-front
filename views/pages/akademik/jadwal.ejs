@@ -1,0 +1,340 @@
+<%- include('../../partials/header') %>
+
+<div class="content-wrapper">
+  <div class="content-header">
+    <h1>Jadwal Pelajaran</h1>
+  </div>
+
+  <section class="content">
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-12">
+          <div class="card">
+            <div class="card-body">
+              <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#createJadwalModal">
+                Tambah Jadwal
+              </button>
+
+              <table id="dataTable" class="table table-bordered table-striped">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Asatid Name</th>
+                    <th>Kelas Name</th>
+                    <th>Lembaga Name</th>
+                    <th>Mata Pelajaran Name</th>
+                    <th>Status</th>
+                    <th>Aksi</th>
+                  </tr>
+                </thead>
+                <tbody id="jadwalTableBody">
+                  <!-- Table content will be dynamically generated here -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- Modal for creating new jadwal -->
+<div class="modal fade" id="createJadwalModal" tabindex="-1" role="dialog" aria-labelledby="createJadwalModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="createJadwalModalLabel">Tambah Jadwal Baru</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <!-- Form for creating new jadwal -->
+        <form id="createJadwalForm">
+          <div class="form-group">
+            <label for="kelas">Kelas</label>
+            <select class="form-control" id="kelas" name="kelas">
+              <!-- Options will be dynamically populated using API endpoint /api/kelas -->
+            </select>
+          </div>
+          <!--div class="form-group">
+            <label for="lembaga">Lembaga</label>
+            <select class="form-control" id="lembaga" name="lembaga">
+
+            </select>
+          </div-->
+          <div class="form-group">
+            <label for="mapel">Mata Pelajaran</label>
+            <select class="form-control" id="mapel" name="mapel">
+              <!-- Options will be dynamically populated using API endpoint /api/mata-pelajaran -->
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="asatid">Asatid</label>
+            <select class="form-control" id="asatid" name="asatid">
+              <!-- Options will be dynamically populated using API endpoint /api/asatid -->
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="status">Status:</label>
+            <select class="form-control" id="status" name="status" required>
+              <option value="1">Aktif</option>
+              <option value="0">Tidak aktif</option>
+            </select>
+          </div>
+          <button type="submit" class="btn btn-primary">Tambah</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  // Fetch jadwal data from API
+  fetch('https://api.appschool.biz.id/api/setting-mapel')
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        populateTable(data.data);
+
+        let initializeSantriDataTable = initializeDataTable(
+            "#dataTable",
+            {
+                "paging": true,
+                "pageLength": 10,
+                "lengthMenu": [10, 25, 50, 100],
+                "lengthChange": false,
+                "searching": true,
+                "ordering": true,
+                "info": true,
+                "autoWidth": false,
+                "responsive": true,
+                "buttons": ["copy", "csv", "excel", "pdf", "print", "colvis"]
+            },
+            '#example1_wrapper .col-md-6:eq(0)'
+        );
+
+
+      } else {
+        console.error('Failed to fetch data from API');
+      }
+    })
+    .catch(error => console.error('Error fetching data:', error));
+
+
+  // Set up event listener for createJadwalForm submission
+  const createJadwalForm = document.getElementById('createJadwalForm');
+  createJadwalForm.addEventListener('submit', handleCreateJadwal);
+});
+
+function populateTable(jadwalData) {
+  const jadwalTableBody = document.getElementById('jadwalTableBody');
+
+  // Clear existing table content
+  jadwalTableBody.innerHTML = '';
+
+  // Populate table with data
+  jadwalData.forEach(jadwal => {
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td>${jadwal.id}</td>
+      <td>${jadwal.asatid_name}</td>
+      <td>${jadwal.kelas_name}</td>
+      <td>${jadwal.lembaga_name}</td>
+      <td>${jadwal.mata_pelajaran_name}</td>
+      <td>${jadwal.status === 1 ? 'Aktif' : 'Tidak aktif'}</td>
+      <td>
+        <button class="btn btn-danger" onclick="deleteJadwal(${jadwal.id})">Hapus</button>
+      </td>
+    `;
+    jadwalTableBody.appendChild(row);
+  });
+}
+
+// Populate dropdowns with data from API endpoints
+kelasDropdown('kelas', 'https://api.appschool.biz.id/api/kelas');
+//lembagaDropdown('lembaga', 'https://api.appschool.biz.id/api/lembaga');
+mapelDropdown('mapel', 'https://api.appschool.biz.id/api/mata-pelajaran');
+asatidDropdown('asatid', 'https://api.appschool.biz.id/api/asatid');
+
+
+
+function kelasDropdown(elementId, apiUrl) {
+  const dropdown = document.getElementById(elementId);
+
+  // Fetch data from API
+  fetch(apiUrl)
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        // Populate dropdown options
+        data.data.forEach(option => {
+          const optionElement = document.createElement('option');
+          optionElement.value = option.id;
+          optionElement.text = option.kelas_name;
+          dropdown.add(optionElement);
+        });
+      } else {
+        console.error(`Failed to fetch ${elementId} data from API`);
+      }
+    })
+    .catch(error => console.error(`Error fetching ${elementId} data:`, error));
+}
+
+/*
+function lembagaDropdown(elementId, apiUrl) {
+  const dropdown = document.getElementById(elementId);
+
+  // Fetch data from API
+  fetch(apiUrl)
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        // Populate dropdown options
+        data.data.forEach(option => {
+          const optionElement = document.createElement('option');
+          optionElement.value = option.code;
+          optionElement.text = option.name;
+          dropdown.add(optionElement);
+        });
+      } else {
+        console.error(`Failed to fetch ${elementId} data from API`);
+      }
+    })
+    .catch(error => console.error(`Error fetching ${elementId} data:`, error));
+}
+*/
+function mapelDropdown(elementId, apiUrl) {
+  const dropdown = document.getElementById(elementId);
+
+  // Fetch data from API
+  fetch(apiUrl)
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        // Populate dropdown options
+        data.data.forEach(option => {
+          const optionElement = document.createElement('option');
+          optionElement.value = option.code;
+          optionElement.text = option.name;
+          dropdown.add(optionElement);
+        });
+      } else {
+        console.error(`Failed to fetch ${elementId} data from API`);
+      }
+    })
+    .catch(error => console.error(`Error fetching ${elementId} data:`, error));
+}
+
+
+function asatidDropdown(elementId, apiUrl) {
+  const dropdown = document.getElementById(elementId);
+
+  // Fetch data from API
+  fetch(apiUrl)
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        // Populate dropdown options
+        data.data.forEach(option => {
+          const optionElement = document.createElement('option');
+          optionElement.value = option.nip;
+          optionElement.text = option.name;
+          dropdown.add(optionElement);
+        });
+      } else {
+        console.error(`Failed to fetch ${elementId} data from API`);
+      }
+    })
+    .catch(error => console.error(`Error fetching ${elementId} data:`, error));
+}
+
+
+function handleCreateJadwal(event) {
+  event.preventDefault();
+
+  const createJadwalForm = new FormData(event.target);
+
+  // Ubah FormData menjadi objek JSON
+  const createJadwalData = {};
+  createJadwalForm.forEach((value, key) => {
+    createJadwalData[key] = value;
+  });
+
+  fetch('https://api.appschool.biz.id/api/setting-mapel/create', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(createJadwalData),
+  })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        // Jika berhasil membuat jadwal, tambahkan logika sesuai kebutuhan
+        console.log('Jadwal berhasil ditambahkan:', data);
+        // Tutup modal
+        $('#createJadwalModal').modal('hide');
+        // Refresh tabel
+        refreshTable();
+      } else {
+        console.error('Gagal menambahkan jadwal:', data.message || 'Terjadi kesalahan.');
+      }
+    })
+    .catch(error => console.error('Error:', error));
+}
+
+function deleteJadwal(id) {
+  fetch(`https://api.appschool.biz.id/api/setting-mapel/delete/${id}`, {
+    method: 'DELETE',
+  })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        // Jika berhasil menghapus jadwal, tambahkan logika sesuai kebutuhan
+        console.log('Jadwal berhasil dihapus:', data);
+        // Refresh tabel
+        refreshTable();
+      } else {
+        console.error('Gagal menghapus jadwal:', data.message || 'Terjadi kesalahan.');
+      }
+    })
+    .catch(error => console.error('Error:', error));
+}
+
+function refreshTable() {
+  // Refresh tabel setelah membuat atau menghapus jadwal
+  fetch('https://api.appschool.biz.id/api/setting-mapel')
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        populateTable(data.data);
+
+        let initializeSantriDataTable = initializeDataTable(
+            "#dataTable",
+            {
+                "paging": true,
+                "pageLength": 10,
+                "lengthMenu": [10, 25, 50, 100],
+                "lengthChange": false,
+                "searching": true,
+                "ordering": true,
+                "info": true,
+                "autoWidth": false,
+                "responsive": true,
+                "buttons": ["copy", "csv", "excel", "pdf", "print", "colvis"]
+            },
+            '#example1_wrapper .col-md-6:eq(0)'
+        );
+      } else {
+        console.error('Gagal memperbarui tabel:', data.message || 'Terjadi kesalahan.');
+      }
+    })
+    .catch(error => console.error('Error fetching data:', error));
+}
+
+</script>
+
+<%- include('../../partials/footer') %>
