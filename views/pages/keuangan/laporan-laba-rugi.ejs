@@ -1,12 +1,77 @@
 <%- include('../../partials/header') %>
 
 <div class="content-wrapper">
-  <div class="content-header">
-    <h1>Laporan Laba Rugi</h1>
-  </div>
 
+  <section class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-4">
+          <h1>Laba Rugi</h1>
+        </div>
+        <div class="col-sm-8 text-right">
+          <form id="priodeForm">
+            <div class="row">
+              <div class="col-2">
+              </div>
+              <div class="col-8">
+                <div class="row">
+                  <!-- Start Date -->
+                  <div class="col-6">
+                    <div class="form-group">
+                      <div class="input-group date priode" id="startDate" data-target-input="nearest">
+                        <input type="text" class="form-control datetimepicker-input" id="startDateInput" name="startDate" data-target="#startDate" data-toggle="datetimepicker" placeholder="Mulai" required />
+                      </div>
+                    </div>
+                  </div>
+                  <!-- End Date -->
+                  <div class="col-6">
+                  <div class="form-group">
+                    <div class="input-group date priode" id="endDate" data-target-input="nearest">
+                      <input type="text" class="form-control datetimepicker-input" id="endDateInput" name="endDate" data-target="#endDate" data-toggle="datetimepicker" placeholder="Sampai" required />
+                      <div class="input-group-append">
+                        <button class="btn btn-default"><i class="fa fa-search"></i></button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                </div>
+              </div>
+              <!-- Search and Clear Buttons -->
+              <div class="col-1">
+                <div class="btn btn-danger" onclick="clearPriode()">Clear</div>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
   <section class="content">
     <div class="container-fluid">
+      <!-- Info boxes -->
+      <div class="row">
+        <!-- Total Beban Info Box -->
+        <div class="col-12 col-sm-6 col-md-3">
+          <div class="info-box">
+            <span class="info-box-icon bg-info elevation-1"><i class="fas fa-dollar-sign"></i></span>
+            <div class="info-box-content">
+              <span class="info-box-text">Total Beban</span>
+              <span class="info-box-number" id="totalBeban">Loading...</span>
+            </div>
+          </div>
+        </div>
+        <!-- Total Pendapatan Info Box -->
+        <div class="col-12 col-sm-6 col-md-3">
+          <div class="info-box mb-3">
+            <span class="info-box-icon bg-danger elevation-1"><i class="fas fa-dollar-sign"></i></span>
+            <div class="info-box-content">
+              <span class="info-box-text">Total Pendapatan</span>
+              <span class="info-box-number" id="totalPendapatan">Loading...</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="row">
         <div class="col-12">
           <div class="card">
@@ -15,8 +80,8 @@
                 <thead>
                   <tr>
                     <th>Jenis</th>
-                    <th>Nama Akun</th>
-                    <th>Nama Subakun</th>
+                    <th>Akun</th>
+                    <th>Sub Akun</th>
                     <th>Pendapatan</th>
                     <th>Beban</th>
                   </tr>
@@ -35,18 +100,64 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-  // Fetch data from API
-  fetch('https://api.appschool.biz.id/api/transaksi/laporan/laba-rugi')
-    .then(response => response.json())
-    .then(data => {
-      if (data.success) {
-        populateTable(data.data);
-        initializeDataTable();
-      } else {
-        console.error('Failed to fetch data from API');
-      }
-    })
-    .catch(error => console.error('Error fetching data:', error));
+  fetchLabaRugiData();
+  // Date picker
+  $('.priode').datetimepicker({
+      format: 'YYYY-M-D'
+  });
+});
+
+function clearPriode() {
+    fetchLabaRugiData();
+    document.getElementById('startDateInput').value = '';
+    document.getElementById('endDateInput').value = '';
+}
+
+function fetchLabaRugiData() {
+    // Fetch data from API
+    fetch('https://api.appschool.biz.id/api/transaksi/laporan/laba-rugi')
+        .then(response => response.json())
+        .then(data => {
+            // Destroy existing DataTable if it exists
+            if ($.fn.DataTable.isDataTable("#dataTable")) {
+                $("#dataTable").DataTable().destroy();
+            }
+            if (data.success) {
+                populateTable(data.data);
+                calculateTotal(data.data); // Calculate total pendapatan and beban
+                initializeDataTable();
+            } else {
+                console.error('Failed to fetch data from API');
+            }
+        })
+        .catch(error => console.error('Error fetching data:', error));
+}
+
+document.getElementById('priodeForm').addEventListener('submit', function (e) {
+    e.preventDefault(); // prevent default form submission
+
+    const form = e.target;
+    const formData = new FormData(form);
+    const startDate = formData.get('startDate');
+    const endDate = formData.get('endDate');
+
+    // Fetch data from API
+    fetch(`https://api.appschool.biz.id/api/transaksi/laporan/laba-rugi/${startDate}/${endDate}`)
+        .then(response => response.json())
+        .then(data => {
+            // Destroy existing DataTable if it exists
+            if ($.fn.DataTable.isDataTable("#dataTable")) {
+                $("#dataTable").DataTable().destroy();
+            }
+            if (data.success) {
+                populateTable(data.data);
+                calculateTotal(data.data); // Calculate total pendapatan and beban
+                initializeDataTable();
+            } else {
+                console.error('Failed to fetch data from API');
+            }
+        })
+        .catch(error => console.error('Error fetching data:', error));
 });
 
 function populateTable(labaRugiData) {
@@ -62,28 +173,43 @@ function populateTable(labaRugiData) {
       <td>${item.jenis}</td>
       <td>${item.account_name}</td>
       <td>${item.subaccount_name}</td>
-      <td>${item.pendapatan}</td>
-      <td>${item.beban}</td>
+      <td>${formatRupiah(item.pendapatan)}</td>
+      <td>${formatRupiah(item.beban)}</td>
     `;
 
     tableBody.appendChild(row);
   });
 }
 
+function calculateTotal(labaRugiData) {
+    // Calculate total pendapatan and beban
+    let totalPendapatan = 0;
+    let totalBeban = 0;
+
+    labaRugiData.forEach(item => {
+        totalPendapatan += parseFloat(item.pendapatan) || 0;
+        totalBeban += parseFloat(item.beban) || 0;
+    });
+
+    // Display total pendapatan and beban
+    document.getElementById('totalPendapatan').innerText = formatRupiah(`${totalPendapatan}`);
+    document.getElementById('totalBeban').innerText = formatRupiah(`${totalBeban}`);
+}
+
 function initializeDataTable() {
-  // Initialize DataTable with paging and limit
-  $("#dataTable").DataTable({
-    "paging": true,
-    "pageLength": 10,  // Set the default number of rows per page
-    "lengthMenu": [10, 25, 50, 100],  // Set available options for rows per page
-    "lengthChange": false,
-    "searching": false,
-    "ordering": true,
-    "info": true,
-    "autoWidth": false,
-    "responsive": true,
-    "buttons": ["copy", "csv", "excel", "pdf", "print", "colvis"]
-  }).buttons().container().appendTo('#example1_wrapper .col-md-6:eq(0)');
+    // Initialize DataTable with paging and limit
+    $("#dataTable").DataTable({
+      "paging": true,
+      "pageLength": 10, // Set the default number of rows per page
+      "lengthMenu": [10, 25, 50, 100], // Set available options for rows per page
+      "lengthChange": true,
+      "searching": true,
+      "ordering": true,
+      "info": true,
+      "autoWidth": false,
+      "responsive": true,
+      "buttons": ["copy", "csv", "excel", "pdf", "print", "colvis"]
+    }).buttons().container().appendTo('#example1_wrapper .col-md-6:eq(0)');
 }
 </script>
 

@@ -197,7 +197,7 @@ document.getElementById('createForm').addEventListener('submit', function (e) {
 
   const form = e.target;
   const formData = new FormData(form);
-
+  
   fetch('https://api.appschool.biz.id/api/santri/create', {
     method: 'POST',
     headers: {
