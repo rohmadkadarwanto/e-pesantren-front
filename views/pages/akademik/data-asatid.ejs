@@ -1,9 +1,18 @@
 <%- include('../../partials/header') %>
 
 <div class="content-wrapper">
-  <div class="content-header">
-    <h1>Data Asatid</h1>
-  </div>
+  <section class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-4">
+          <h1>Data Asatid</h1>
+        </div>
+        <div class="col-sm-8 text-right">
+          <button onclick="openCreateForm()" class="btn btn-success">Asatid Baru</button>
+        </div>
+      </div>
+    </div>
+  </section>
 
   <section class="content">
     <div class="container-fluid">
@@ -11,7 +20,6 @@
         <div class="col-12">
           <div class="card">
             <div class="card-body">
-              <button onclick="openCreateForm()" class="btn btn-success">Create Asatid</button>
               <table id="dataTable" class="table table-bordered table-striped">
                 <thead>
                   <tr>

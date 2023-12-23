@@ -1,9 +1,18 @@
 <%- include('../../partials/header') %>
 
 <div class="content-wrapper">
-  <div class="content-header">
-    <h1>Account Utama</h1>
-  </div>
+  <section class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-4">
+          <h1>Account</h1>
+        </div>
+        <div class="col-sm-8 text-right">
+          <button class="btn btn-success mb-2" data-toggle="modal" data-target="#addAccountModal">Tambah Rekening</button>
+        </div>
+      </div>
+    </div>
+  </section>
 
   <section class="content">
     <div class="container-fluid">
@@ -11,7 +20,6 @@
         <div class="col-12">
           <div class="card">
             <div class="card-body">
-              <button class="btn btn-success mb-2" data-toggle="modal" data-target="#addAccountModal">Tambah Account Utama</button>
               <table id="dataTable" class="table table-bordered table-striped">
                 <thead>
                   <tr>
@@ -39,13 +47,21 @@
   <div class="modal-dialog" role="document">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="addAccountModalLabel">Tambah Account Utama</h5>
+        <h5 class="modal-title" id="addAccountModalLabel">Tambah Rekening</h5>
         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
       <div class="modal-body">
         <form id="addAccountForm">
+
+          <div class="form-group">
+            <label for="accountCode">Account Utama</label>
+            <select class="form-control" id="accountCode" name="account_code">
+
+              <!-- Options will be dynamically generated using JavaScript -->
+            </select>
+          </div>
           <div class="form-group">
             <label for="code">Code:</label>
             <input type="text" class="form-control" id="code" name="code" required>
@@ -99,7 +115,39 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     })
     .catch(error => console.error('Error fetching data:', error));
+
+
+    // Fetch account codes for the select dropdown
+    fetch('https://api.appschool.biz.id/api/coa-account')
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          populateAccountCodes(data.data);
+        } else {
+          console.error('Failed to fetch account codes from API');
+        }
+      })
+      .catch(error => console.error('Error fetching account codes:', error));
+
 });
+
+
+function populateAccountCodes(accountData) {
+  const accountCodeSelect = document.getElementById('accountCode');
+
+  // Clear existing options
+  accountCodeSelect.innerHTML = '<option value="">Pilih Account</option>';
+
+  // Populate select dropdown with account codes
+  accountData.forEach(account => {
+    const option = document.createElement('option');
+    option.value = account.code;
+    option.textContent = `${account.code} - ${account.name}`;
+    accountCodeSelect.appendChild(option);
+  });
+}
+
+
 
 function populateTable(accountData) {
   const tableBody = document.getElementById('tableBody');

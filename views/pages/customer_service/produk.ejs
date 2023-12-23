@@ -1,16 +1,14 @@
 <%- include('../../partials/header') %>
+
 <div class="content-wrapper">
   <section class="content-header">
     <div class="container-fluid">
       <div class="row mb-2">
         <div class="col-sm-4">
-          <h1>Data Produk</h1>
+          <h1>Data Rekening</h1>
         </div>
         <div class="col-sm-8 text-right">
-          <!-- Tambahkan tombol untuk menampilkan modal form create -->
-          <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#createModal">
-            Pembukaan Baru
-          </button>
+          <button onclick="openCreateForm()" class="btn btn-success">Rekening Baru</button>
         </div>
       </div>
     </div>
@@ -22,7 +20,19 @@
         <div class="col-12">
           <div class="card">
             <div class="card-body">
-              <h1 class="text-center">Sedang Dalam pengerjaan</h1>
+              <table id="dataTable" class="table table-bordered table-striped">
+                <thead>
+                  <tr>
+                    <th>Rekening</th>
+                    <th>Tipe akun</th>
+                    <th>Nasabah</th>
+                    <th>Aksi</th>
+                  </tr>
+                </thead>
+                <tbody id="tableBody">
+                  <!-- Table content will be dynamically generated here -->
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
@@ -30,5 +40,219 @@
     </div>
   </section>
 </div>
+
+<!-- Create Form Modal -->
+<div class="modal fade" id="createFormModal" tabindex="-1" role="dialog" aria-labelledby="createFormModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="createFormModalLabel">Rekening Baru</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form id="createForm">
+          <div class="form-group">
+            <label for="type">Tipe Rekening:</label>
+            <select class="form-control" id="type" name="type" required>
+              <option value="simpanan">Simpanan</option>
+              <option value="pembiayaan">Pembiayaan</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="nasabah_code">Nasabah:</label>
+            <select class="form-control" id="nasabah_code" name="nasabah_code" required>
+              <!-- Options will be dynamically generated here -->
+            </select>
+          </div>
+          <button type="submit" class="btn btn-primary">Buat</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- Detail Modal -->
+<div class="modal fade" id="detailModal" tabindex="-1" role="dialog" aria-labelledby="detailModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="detailModalLabel">Detail Rekening</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body" id="detailContent">
+        <!-- Detail content will be dynamically generated here -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  // Fetch data from API
+  fetchNasabahData();
+  fetchRekeningData();
+});
+
+function fetchNasabahData() {
+  fetch('http://localhost:3000/api/nasabah')
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        populateNasabahDropdown(data.data);
+      } else {
+        console.error('Failed to fetch Nasabah data from API');
+      }
+    })
+    .catch(error => console.error('Error fetching Nasabah data:', error));
+}
+
+function populateNasabahDropdown(nasabahData) {
+  const nasabahDropdown = document.getElementById('nasabah_code');
+  nasabahDropdown.innerHTML = '';
+
+  nasabahData.forEach(nasabah => {
+    const option = document.createElement('option');
+    option.value = nasabah.code;
+    option.text = nasabah.nama + ' - '+nasabah.code+'';
+    nasabahDropdown.appendChild(option);
+  });
+}
+
+function fetchRekeningData() {
+  fetch('http://localhost:3000/api/rekening')
+    .then(response => response.json())
+    .then(data => {
+      if ($.fn.DataTable.isDataTable("#dataTable")) {
+        $("#dataTable").DataTable().destroy();
+      }
+      if (data.success) {
+        populateTable(data.data);
+        initializeDataTable();
+      } else {
+        console.error('Failed to fetch Rekening data from API');
+      }
+    })
+    .catch(error => console.error('Error fetching Rekening data:', error));
+}
+
+function populateTable(rekeningData) {
+  const tableBody = document.getElementById('tableBody');
+
+  // Clear existing table content
+  tableBody.innerHTML = '';
+
+  // Populate table with data
+  rekeningData.forEach(rekening => {
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td>${rekening.nomor_rekening}</td>
+      <td>${rekening.type}</td>
+      <td>${rekening.nama} (${rekening.nasabah_code})</td>
+      <td>
+        <button onclick="showRekeningDetail('${rekening.nomor_rekening}')" class="btn btn-info">Detail</button>
+        <button onclick="deleteRekening('${rekening.nomor_rekening}')" class="btn btn-danger">Delete</button>
+      </td>
+    `;
+
+    tableBody.appendChild(row);
+  });
+}
+
+function showRekeningDetail(nomorRekening) {
+  fetch(`http://localhost:3000/api/rekening/${nomorRekening}`)
+    .then(response => response.json())
+    .then(data => {
+      if (data.success && data.count > 0) {
+        const rekeningDetail = data.data;
+
+        // Customize this part based on the actual response structure
+        const detailContent = document.getElementById('detailContent');
+        const detailHTML = `
+          <p><strong>Nasabah:</strong> ${rekeningDetail.nama} (${rekeningDetail.nasabah_code})</p>
+          <p><strong>Rekening:</strong> ${rekeningDetail.nomor_rekening}</p>
+          <p><strong>Tipe:</strong> ${rekeningDetail.type}</p>
+        `;
+        detailContent.innerHTML = detailHTML;
+
+        $('#detailModal').modal('show');
+      } else {
+        console.error('Failed to fetch Rekening detail:', data.message);
+      }
+    })
+    .catch(error => console.error('Error fetching Rekening detail:', error));
+}
+
+function openCreateForm() {
+  $('#createFormModal').modal('show');
+}
+
+document.getElementById('createForm').addEventListener('submit', function (e) {
+  e.preventDefault();
+
+  const form = e.target;
+  const formData = new FormData(form);
+
+  fetch('http://localhost:3000/api/rekening/create', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(Object.fromEntries(formData)),
+  })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        fetchRekeningData(); // Refresh the table
+        $('#createFormModal').modal('hide');
+      } else {
+        console.error('Failed to create Rekening:', data.message);
+      }
+    })
+    .catch(error => console.error('Error creating Rekening:', error));
+});
+
+function deleteRekening(nomorRekening) {
+  if (confirm('Are you sure you want to delete this Rekening?')) {
+    fetch(`http://localhost:3000/api/rekening/delete/${nomorRekening}`, {
+      method: 'DELETE',
+    })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          fetchRekeningData(); // Refresh the table
+        } else {
+          console.error('Failed to delete Rekening:', data.message);
+          fetchRekeningData(); // Refresh the table
+        }
+      })
+      .catch(error => console.error('Error deleting Rekening:', error));
+  }
+}
+
+function initializeDataTable() {
+  // Initialize DataTable with paging and limit
+  $("#dataTable").DataTable({
+    "paging": true,
+    "pageLength": 10,  // Set the default number of rows per page
+    "lengthMenu": [10, 25, 50, 100],  // Set available options for rows per page
+    "lengthChange": true,
+    "searching": true,
+    "ordering": true,
+    "info": true,
+    "autoWidth": false,
+    "responsive": true,
+    "buttons": ["copy", "csv", "excel", "pdf", "print", "colvis"]
+  }).buttons().container().appendTo('#example1_wrapper .col-md-6:eq(0)');
+}
+
+
+</script>
+
+
 
 <%- include('../../partials/footer') %>
