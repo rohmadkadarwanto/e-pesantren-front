@@ -99,7 +99,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function fetchNasabahData() {
-  fetch('http://localhost:3000/api/nasabah')
+  fetch('https://api.appschool.biz.id/api/nasabah')
     .then(response => response.json())
     .then(data => {
       if (data.success) {
@@ -124,7 +124,7 @@ function populateNasabahDropdown(nasabahData) {
 }
 
 function fetchRekeningData() {
-  fetch('http://localhost:3000/api/rekening')
+  fetch('https://api.appschool.biz.id/api/rekening')
     .then(response => response.json())
     .then(data => {
       if ($.fn.DataTable.isDataTable("#dataTable")) {
@@ -164,7 +164,7 @@ function populateTable(rekeningData) {
 }
 
 function showRekeningDetail(nomorRekening) {
-  fetch(`http://localhost:3000/api/rekening/${nomorRekening}`)
+  fetch(`https://api.appschool.biz.id/api/rekening/${nomorRekening}`)
     .then(response => response.json())
     .then(data => {
       if (data.success && data.count > 0) {
@@ -197,7 +197,7 @@ document.getElementById('createForm').addEventListener('submit', function (e) {
   const form = e.target;
   const formData = new FormData(form);
 
-  fetch('http://localhost:3000/api/rekening/create', {
+  fetch('https://api.appschool.biz.id/api/rekening/create', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -218,7 +218,7 @@ document.getElementById('createForm').addEventListener('submit', function (e) {
 
 function deleteRekening(nomorRekening) {
   if (confirm('Are you sure you want to delete this Rekening?')) {
-    fetch(`http://localhost:3000/api/rekening/delete/${nomorRekening}`, {
+    fetch(`https://api.appschool.biz.id/api/rekening/delete/${nomorRekening}`, {
       method: 'DELETE',
     })
       .then(response => response.json())
