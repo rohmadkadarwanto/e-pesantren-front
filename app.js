@@ -17,6 +17,8 @@ const sistemRoute = require('./routes/sistem');
 const customerServiceRoute = require('./routes/customer_service');
 const tellerRoute = require('./routes/teller');
 
+const transaksiRoute = require('./routes/transaksi');
+
 app.use('/', indexRoute);
 app.use('/akademik', akademikRoute);
 app.use('/keuangan', keuanganRoute);
@@ -24,6 +26,7 @@ app.use('/blog', blogRoute);
 app.use('/sistem', sistemRoute);
 app.use('/customer/service', customerServiceRoute);
 app.use('/teller', tellerRoute);
+app.use('/transaksi', transaksiRoute);
 
 app.listen(port, () => {
   console.log(`Server is running at http://localhost:${port}`);
