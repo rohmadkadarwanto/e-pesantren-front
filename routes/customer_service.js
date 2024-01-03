@@ -6,7 +6,7 @@ router.get('/pembukaan-produk', (req, res) => {
 });
 
 router.get('/nasabah', (req, res) => {
-  res.render('pages/customer_service/nasabah');
+  res.render('pages/nasabah/nasabah');
 });
 
 

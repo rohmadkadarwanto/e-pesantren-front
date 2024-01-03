@@ -1,127 +1,143 @@
-<%- include('../../partials/header') %>
-<div class="content-wrapper" id="entitasList">
-  <div class="content-header">
-    <div class="container">
-      <div class="row mb-2">
-        <div class="col-sm-6">
-          <h1 class="m-0">Data Transaksi Keuangan</h1>
-        </div>
-        <div class="col-sm-6">
-          <div class="float-sm-right">
-            <button class="btn btn-success" onclick="showNewTransaksiForm()">Tambah Transaksi</button>
-          </div>
-        </div>
-      </div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Data Transaksi Keuangan</title>
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+  <!-- AdminLTE Styles -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.1.0/dist/css/adminlte.min.css">
+  <!-- Your Custom Styles -->
+  <style>
+    .loading-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(255, 255, 255, 0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container mt-5">
+  <h2 class="mb-4">Data Transaksi Keuangan</h2>
+
+  <!-- List Transaksi -->
+  <div id="transaksiList" class="card">
+    <div class="card-header">
+      <button class="btn btn-success" onclick="showNewTransaksiForm()">Tambah Transaksi</button>
+    </div>
+    <div class="card-body">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Kode Transaksi</th>
+            <th>Kode Entitas</th>
+            <th>Kode Jenis Transaksi</th>
+            <th>Tanggal Transaksi</th>
+            <th>Keterangan</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Data will be loaded dynamically here -->
+        </tbody>
+      </table>
     </div>
   </div>
 
-  <section class="content">
-    <div class="container">
-      <!-- List Transaksi -->
-      <div id="transaksiList" class="card">
-
-        <div class="card-header">
-          <h3 class="card-title">
-            <i class="fas fa-users mr-1"></i>
-            Daftar Transaksi
-          </h3>
+  <!-- Create/Edit Form -->
+  <div id="transaksiForm" style="display: none;" class="card">
+    <div class="card-header">
+      <button class="btn btn-success" onclick="cancelTransaksiForm()">Kembali</button>
+    </div>
+    <div class="card-body">
+      <form data-toggle="validator">
+        <div class="form-group">
+          <label for="kode_transaksi">Kode Transaksi:</label>
+          <input type="text" class="form-control" id="kode_transaksi" name="kode_transaksi" required data-error="Kode Transaksi harus diisi">
         </div>
-        <div class="card-body">
-          <table class="table table-responsive">
-            <thead>
-              <tr>
-                <th>Kode Transaksi</th>
-                <th>Kode Nasabah</th>
-                <th>Jenis Transaksi</th>
-                <th>Tanggal Transaksi</th>
-                <th>Keterangan</th>
-                <th>Aksi</th>
-              </tr>
-            </thead>
-            <tbody>
-              <!-- Data will be loaded dynamically here -->
-            </tbody>
-          </table>
+        <div class="form-group">
+          <label for="kode_entitas">Nasabah:</label>
+          <select class="form-control" id="kode_entitas" name="kode_entitas" required data-error="Pilih kode entitas"></select>
         </div>
-      </div>
-
-      <!-- Create/Edit Form -->
-      <div id="transaksiForm" style="display: none;" class="card">
-        <div class="card-header">
-          <h3 class="card-title"><i class="fas fa-kredit mr-1"></i>Data Transaksi</h3>
+        <div class="form-group">
+          <label for="kode_akun">Akun:</label>
+          <select class="form-control" id="kode_akun" name="kode_akun" required data-error="Pilih Kode Akun">
+            <!-- Options will be loaded dynamically here -->
+            <option value="">Pilih Akun</option>
+          </select>
         </div>
-        <div class="card-body">
-          <form data-toggle="validator">
-            <div class="form-group">
-              <label for="kode_transaksi">Kode Transaksi:</label>
-              <input type="text" class="form-control" id="kode_transaksi" name="kode_transaksi" required data-error="Kode Transaksi harus diisi">
-            </div>
-            <div class="form-group">
-              <label for="kode_entitas">Nasabah:</label>
-              <select class="form-control" id="kode_entitas" name="kode_entitas" required data-error="Pilih kode entitas"></select>
-            </div>
-            <div class="form-group">
-              <label for="kode_akun">Akun:</label>
-              <select class="form-control" id="kode_akun" name="kode_akun" required data-error="Pilih Kode Akun">
-                <!-- Options will be loaded dynamically here -->
-                <option value="">Pilih Akun</option>
-              </select>
-            </div>
-            <div class="form-group">
+        <div class="form-group">
               <label for="kode_jenis_transaksi">Jenis Transaksi:</label>
               <select class="form-control" id="kode_jenis_transaksi" name="kode_jenis_transaksi" required data-error="Pilih kode jenis transaksi"></select>
             </div>
-
-            <div class="form-group">
-              <label for="jumlah">Nominal:</label>
-              <input type="number" class="form-control" id="jumlah" name="jumlah" required>
-            </div>
-            <div class="form-group">
-              <label for="tanggal_transaksi">Tanggal Transaksi:</label>
-              <input type="date" class="form-control" id="tanggal_transaksi" name="tanggal_transaksi" required data-error="Tanggal Transaksi harus diisi">
-            </div>
-            <div class="form-group">
-              <label for="keterangan">Keterangan:</label>
-              <textarea class="form-control" id="keterangan" name="keterangan" required data-error="Keterangan harus diisi"></textarea>
-            </div>
-
-            <input type="hidden" id="id_transaksi" name="id_transaksi">
-
-            <button type="button" class="btn btn-primary" onclick="saveTransaksi()">Save</button>
-            <button type="button" class="btn btn-danger" onclick="cancelTransaksiForm()">Cencel</button>
-          </form>
+        <div class="form-group">
+          <label for="tanggal_transaksi">Tanggal Transaksi:</label>
+          <input type="date" class="form-control" id="tanggal_transaksi" name="tanggal_transaksi" required data-error="Tanggal Transaksi harus diisi">
         </div>
-      </div>
+        <div class="form-group">
+          <label for="keterangan">Keterangan:</label>
+          <textarea class="form-control" id="keterangan" name="keterangan" required data-error="Keterangan harus diisi"></textarea>
+        </div>
 
-      <div id="transaksiDetail" style="display: none;" class="card">
-        <div class="card-header">
-          <button class="btn btn-success" onclick="cancelTransaksiDetail()">Kembali</button>
-        </div>
-        <div class="card-body">
-          <ul class="list-group">
-            <li class="list-group-item">
-              <strong>Kode Transaksi:</strong> <span id="detail_kode_transaksi">Loading</span>
-            </li>
-            <li class="list-group-item">
-              <strong>Kode Nasabah:</strong> <span id="detail_kode_entitas">Loading</span>
-            </li>
-            <li class="list-group-item">
-              <strong>Kode Jenis Transaksi:</strong> <span id="detail_kode_jenis_transaksi">Loading</span>
-            </li>
-            <li class="list-group-item">
-              <strong>Tanggal Transaksi:</strong> <span id="detail_tanggal_transaksi">Loading</span>
-            </li>
-            <li class="list-group-item">
-              <strong>Keterangan:</strong> <span id="detail_keterangan">Loading</span>
-            </li>
-          </ul>
-        </div>
-      </div>
+        <input type="hidden" id="id_transaksi" name="id_transaksi">
+
+        <button type="button" class="btn btn-primary" onclick="saveTransaksi()">Save</button>
+      </form>
     </div>
+  </div>
 
-  </section>
+  <div id="transaksiDetail" style="display: none;" class="card">
+    <div class="card-header">
+      <button class="btn btn-success" onclick="cancelTransaksiDetail()">Kembali</button>
+    </div>
+    <div class="card-body">
+      <ul class="list-group">
+        <li class="list-group-item">
+          <strong>Kode Transaksi:</strong> <span id="detail_kode_transaksi">Loading</span>
+        </li>
+        <li class="list-group-item">
+          <strong>Kode Nasabah:</strong> <span id="detail_kode_entitas">Loading</span>
+        </li>
+        <li class="list-group-item">
+          <strong>Kode Jenis Transaksi:</strong> <span id="detail_kode_jenis_transaksi">Loading</span>
+        </li>
+        <li class="list-group-item">
+          <strong>Tanggal Transaksi:</strong> <span id="detail_tanggal_transaksi">Loading</span>
+        </li>
+        <li class="list-group-item">
+          <strong>Keterangan:</strong> <span id="detail_keterangan">Loading</span>
+        </li>
+      </ul>
+    </div>
+  </div>
 </div>
+
+<!-- Bootstrap JS and dependencies -->
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+<!-- Bootstrap Validator -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/1000hz-bootstrap-validator/0.11.9/validator.min.js"></script>
+
+<!-- AdminLTE JS -->
+<script src="https://cdn.jsdelivr.net/npm/admin-lte@3.1.0/dist/js/adminlte.min.js"></script>
+<!-- SweetAlert library -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
+
 <script>
+const endpointEntitas = "https://api.appschool.biz.id/api/entitas";
+const endpointTransaksi = "https://api.appschool.biz.id/api/transaksi_keuangan";
+const endpointJenisTransaksi = "https://api.appschool.biz.id/api/jenis_transaksi";
+const endpointAkunKeuangan = "https://api.appschool.biz.id/api/akun_keuangan";
 
 document.addEventListener('DOMContentLoaded', () => {
   fetchTransaksiList();
@@ -149,11 +165,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const kode_akun = `INV${timestamp}`;
 
     document.getElementById('kode_transaksi').value = kode_akun;
-
-
-
-    //populateTipeTransaksiDropdown();
-
   }
 
   async function populateKodeJenisTransaksiDropdown() {
@@ -168,7 +179,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       tipeEntitasOptions = [
         { value: "", text: "Pilih Jenis Transaksi", selected: true, disabled: true },
-        ...data.map(jenisTransaksi => ({ value: jenisTransaksi.kode_jenis_transaksi, text: jenisTransaksi.nama_jenis_transaksi + ` (${jenisTransaksi.tipe_transaksi})` }))
+        ...data.map(jenisTransaksi => ({ value: jenisTransaksi.kode_jenis_transaksi, text: jenisTransaksi.nama_jenis_transaksi }))
       ];
 
       // Tambahkan opsi baru dari data jenis transaksi
@@ -204,10 +215,8 @@ document.addEventListener('DOMContentLoaded', () => {
     akunKeuanganOptions.forEach(option => {
       const newOption = document.createElement("option");
       newOption.value = option.kode_akun;
-      newOption.text = option.nama_akun + ' ('+getTipeTransaksiText(option.tipe_transaksi)+')';
-      //if(option.tipe_transaksi == 'debit') {
-        dropdown.appendChild(newOption);
-      //}
+      newOption.text = option.nama_akun;
+      dropdown.appendChild(newOption);
     });
   }
 
@@ -241,7 +250,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function resetTransaksiForm() {
-    const formElements = ['id_transaksi', 'kode_transaksi', 'kode_entitas', 'kode_jenis_transaksi', 'tanggal_transaksi', 'keterangan','jumlah','kode_akun'];
+    const formElements = ['id_transaksi', 'kode_transaksi', 'kode_entitas', 'kode_jenis_transaksi', 'tanggal_transaksi', 'keterangan'];
     formElements.forEach(element => {
       document.getElementById(element).value = '';
     });
@@ -267,12 +276,12 @@ document.addEventListener('DOMContentLoaded', () => {
           <td>${transaksi.kode_transaksi}</td>
           <td>${transaksi.kode_entitas}</td>
           <td>${transaksi.kode_jenis_transaksi}</td>
-          <td>${formatDate(transaksi.tanggal_transaksi)}</td>
+          <td>${transaksi.tanggal_transaksi}</td>
           <td>${transaksi.keterangan}</td>
           <td>
             <button class="btn btn-light btn-sm" onclick="detailTransaksi('${transaksi.id_transaksi}')">Detail</button>
-            <!--button class="btn btn-info btn-sm" onclick="editTransaksi('${transaksi.id_transaksi}')">Edit</button>
-            <button class="btn btn-danger btn-sm" onclick="deleteTransaksi('${transaksi.id_transaksi}')">Delete</button-->
+            <button class="btn btn-info btn-sm" onclick="editTransaksi('${transaksi.id_transaksi}')">Edit</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteTransaksi('${transaksi.id_transaksi}')">Delete</button>
           </td>
         </tr>
       `;
@@ -335,9 +344,6 @@ document.addEventListener('DOMContentLoaded', () => {
         kode_jenis_transaksi: document.getElementById('kode_jenis_transaksi').value,
         tanggal_transaksi: document.getElementById('tanggal_transaksi').value,
         keterangan: document.getElementById('keterangan').value,
-        jumlah: document.getElementById('jumlah').value,
-        kode_akun: document.getElementById('kode_akun').value,
-        //tipe_transaksi: document.getElementById('tipe_transaksi').value,
       };
 
       const transaksiId = document.getElementById('id_transaksi').value;
@@ -427,21 +433,6 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('kode_jenis_transaksi').value = data.kode_jenis_transaksi;
     document.getElementById('tanggal_transaksi').value = data.tanggal_transaksi;
     document.getElementById('keterangan').value = data.keterangan;
-    document.getElementById('jumlah').value = data.jumlah;
-
-    document.getElementById('kode_entitas').addEventListener('change', fetchAkunKeuanganOptions(data.kode_entitas));
-
-
-    /*populateTipeTransaksiDropdown();
-
-    const tipeTransaksiDropdown = document.getElementById('tipe_transaksi');
-    for (let i = 0; i < tipeTransaksiDropdown.options.length; i++) {
-      if (tipeTransaksiDropdown.options[i].value === data.tipe_transaksi) {
-        tipeTransaksiDropdown.options[i].selected = true;
-        break;
-      }
-    }*/
-
   }
 
   function populateTransaksiDetail(data) {
@@ -465,3 +456,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 </script>
+
+</body>
+</html>

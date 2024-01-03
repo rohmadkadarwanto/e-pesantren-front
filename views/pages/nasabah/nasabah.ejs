@@ -1,0 +1,387 @@
+<%- include('../../partials/header') %>
+
+<%- include('./nasabah_baru') %>
+<%- include('./nasabah_detail') %>
+<%- include('./nasabah_list') %>
+
+<script>
+
+
+  document.addEventListener('DOMContentLoaded', () => {
+    fetchEntitasList();
+  });
+
+
+  // Fungsi untuk mendapatkan judul dropdown berdasarkan nilai yang dipilih
+function getSelectedText(elementId) {
+  const selectElement = document.getElementById(elementId);
+  const selectedText = selectElement.options[selectElement.selectedIndex].text;
+  return selectedText;
+}
+
+  $(document).ready(function () {
+    //$('form[data-toggle="validator"]').validator();
+  });
+  function showNewEntitasForm() {
+    resetEntitasForm();
+    showEntitasForm();
+    populateTipeEntitasDropdown();
+  }
+
+  function resetEntitasForm() {
+    const formElements = [
+      'kode_entitas',
+      'nama_entitas',
+      'telp_entitas',
+      'alamat_entitas',
+      'email_entitas',
+      'informasi_tambahan_entitas',
+      'nama_akun',
+      'saldo_awal',
+    ];
+    formElements.forEach(element => {
+      document.getElementById(element).value = '';
+    });
+  }
+
+  const tipeEntitasOptions = [
+    { value: "", text: "Pilih Tipe Nasabah", selected: true, disabled: true },
+    { value: "santri", text: "Santri" },
+    { value: "wali", text: "Wali Santri" },
+    { value: "perusahaan", text: "Perusahaan" },
+    { value: "nasabah", text: "Nasabah Umum" }
+  ];
+
+  // Fungsi untuk mengambil teks berdasarkan nilai (value)
+  function getTipeEntitasText(value) {
+    const option = tipeEntitasOptions.find(option => option.value === value);
+    return option ? option.text : null;
+  }
+
+  async function fetchEntitasList() {
+    try {
+      const response = await fetch(endpointEntitas);
+      const data = await response.json();
+      displayEntitasList(data);
+    } catch (error) {
+      console.error('Error fetching entitas list:', error);
+    }
+  }
+
+  function displayEntitasList(entitasList) {
+    const tbody = document.querySelector('#entitasList tbody');
+    tbody.innerHTML = '';
+
+    entitasList.forEach(entitas => {
+      const row = `
+        <tr>
+          <td>${entitas.kode_entitas}</td>
+          <td>${entitas.nama_entitas}</td>
+          <td>${entitas.telp_entitas}</td>
+          <td>${formatDate(entitas.tanggal_masuk_entitas)}</td>
+          <td>${getTipeEntitasText(entitas.tipe_entitas)}</td>
+          <td>
+            <button class="btn btn-light btn-sm" onclick="detailEntitas('${entitas.kode_entitas}')">Detail</button>
+            <button class="btn btn-info btn-sm" onclick="editEntitas('${entitas.kode_entitas}')">Edit</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteEntitas('${entitas.kode_entitas}')">Delete</button>
+          </td>
+        </tr>
+      `;
+      tbody.innerHTML += row;
+    });
+  }
+
+  function showEntitasForm() {
+    document.getElementById('entitasForm').style.display = 'block';
+    document.getElementById('entitasList').style.display = 'none';
+  }
+
+  function cancelEntitasForm() {
+    document.getElementById('entitasForm').style.display = 'none';
+    document.getElementById('entitasList').style.display = 'block';
+  }
+
+  function showEntitasDetail() {
+    document.getElementById('entitasDetail').style.display = 'block';
+    document.getElementById('entitasList').style.display = 'none';
+  }
+
+  function cancelEntitasDetail() {
+    document.getElementById('entitasDetail').style.display = 'none';
+    document.getElementById('entitasList').style.display = 'block';
+  }
+
+  function editEntitas(id) {
+    fetch(endpointEntitas + `/${id}`)
+      .then(response => response.json())
+      .then(data => {
+        populateEntitasForm(data);
+        showEntitasForm();
+      })
+      .catch(error => {
+        console.error('Error fetching entitas details:', error);
+      });
+  }
+
+  function detailEntitas(id) {
+    fetch(endpointEntitas + `/${id}`)
+      .then(response => response.json())
+      .then(data => {
+        showEntitasDetail();
+        populateEntitasDetail(data.entitas);
+        populateAkunBox(data.saldoSetelahPenyesuaian);
+
+        document.getElementById('info-box-kredit').innerText = formatRupiah(data.totalKredit);
+        document.getElementById('info-box-debit').innerText = formatRupiah(data.totalDebit);
+      })
+      .catch(error => {
+        console.error('Error fetching entitas details:', error);
+      });
+  }
+
+
+  function populateAkunBox(data) {
+    const box = document.getElementById("akun-box");
+    const listDetailProfile = document.getElementById("list-detail-profile");
+
+
+    const elementsToRemove = document.querySelectorAll('.box-akun');
+    elementsToRemove.forEach(element => element.remove());
+
+    const elementsToRemoveRekening = document.querySelectorAll('.rekening');
+    elementsToRemoveRekening.forEach(element => element.remove());
+
+      // Tambahkan opsi baru dari array
+      data.forEach(option => {
+        const existingElement = document.getElementById(`info-box-${option.kode_akun}`);
+        const existingElementRekening = document.getElementById(`no-rekening-${option.kode_akun}`);
+
+        if(!existingElementRekening) {
+          const newList = document.createElement("li");
+          newList.setAttribute("class", "list-group-item rekening");
+
+          newList.innerHTML = `<strong>Rekening ${getTipeTransaksiText(option.tipe_transaksi)}:</strong> <span id="no-rekening-${option.kode_akun}">${option.kode_akun}</span>`;
+          listDetailProfile.appendChild(newList);
+        } else {
+          existingElementRekening.innerText = option.kode_akun;
+        }
+
+
+
+
+        //if(option.tipe_transaksi == 'debit') {
+          if(!existingElement) {
+            const newBox = document.createElement("div");
+            newBox.setAttribute("id", `col-box-${option.kode_akun}`);
+            newBox.setAttribute("class", "col-12 col-sm-6 col-md-3 box-akun");
+
+            newBox.innerHTML = `
+              <div class="info-box">
+                <span class="info-box-icon bg-info elevation-1"><i class="fas fa-dollar-sign"></i></span>
+
+                <div class="info-box-content">
+                  <span class="info-box-text">
+                  ${option.nama_akun} (${getTipeTransaksiText(option.tipe_transaksi)})
+                  </span>
+                  <span class="info-box-number" id="info-box-${option.kode_akun}">
+                    ${option.tipe_transaksi == 'kredit' ? formatRupiah(option.debit) : formatRupiah(option.kredit)}
+                  </span>
+                </div>
+                <!-- /.info-box-content -->
+              </div>`;
+
+            box.prepend(newBox);
+            //boxSaldoAwal.after(newBox);
+          } else {
+            existingElement.innerText = option.tipe_transaksi == 'kredit' ? formatRupiah(option.debit) : formatRupiah(option.kredit);
+          }
+        //}
+
+      });
+  }
+
+
+
+
+  async function saveEntitas() {
+    const loadingOverlay = showLoadingOverlay(); // Menampilkan overlay loading
+
+    try {
+      const formData = {
+        kode_entitas: document.getElementById('kode_entitas').value,
+        nama_entitas: document.getElementById('nama_entitas').value,
+        telp_entitas: document.getElementById('telp_entitas').value,
+        alamat_entitas: document.getElementById('alamat_entitas').value,
+        email_entitas: document.getElementById('email_entitas').value,
+        informasi_tambahan_entitas: document.getElementById('informasi_tambahan_entitas').value,
+        tipe_entitas: document.getElementById('tipe_entitas').value,
+        informasi_tambahan_entitas: document.getElementById('informasi_tambahan_entitas').value,
+        nama_akun: document.getElementById('nama_akun').value,
+        saldo_awal: document.getElementById('saldo_awal').value,
+      };
+
+      const entitasId = document.getElementById('kode_entitas').value;
+
+      if (entitasId) {
+        const response = await fetch(endpointEntitas + `/${entitasId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(formData),
+        });
+        const data = await response.json();
+        if(data.success) {
+          //console.log('Entitas updated successfully:', data);
+          fetchEntitasList();
+          cancelEntitasForm();
+          showAlert('success', data.message);
+        } else {
+          //console.log('Entitas updated successfully:', data);
+          showAlert('error', data.message);
+        }
+      } else {
+        const response = await fetch(endpointEntitas, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(formData),
+        });
+        const data = await response.json();
+        if(data.success) {
+          //console.log('Entitas updated successfully:', data);
+          fetchEntitasList();
+          cancelEntitasForm();
+          showAlert('success', data.message);
+        } else {
+          //console.log('Entitas updated successfully:', data);
+          showAlert('error', data.message);
+        }
+
+      }
+
+
+
+    } catch (error) {
+      console.error('Error saving entitas:', error);
+      showAlert('error', 'Error saving entitas');
+    } finally {
+      hideLoadingOverlay(loadingOverlay); // Menyembunyikan overlay loading
+    }
+  }
+
+  async function deleteEntitas(id) {
+    if (await showConfirm('Are you sure you want to delete this entitas?')) {
+      const loadingOverlay = showLoadingOverlay(); // Menampilkan overlay loading
+
+      try {
+        const response = await fetch(endpointEntitas + `/${id}`, {
+          method: 'DELETE',
+        });
+        const data = await response.json();
+        console.log('Entitas deleted successfully:', data);
+        fetchEntitasList();
+        showAlert('success', 'Entitas deleted successfully');
+      } catch (error) {
+        console.error('Error deleting entitas:', error);
+        showAlert('error', 'Error deleting entitas');
+      } finally {
+        hideLoadingOverlay(loadingOverlay); // Menyembunyikan overlay loading
+      }
+    }
+  }
+
+  function showAlert(type, message) {
+    Swal.fire({
+      icon: type,
+      title: message,
+      showConfirmButton: false,
+      timer: 1500,
+    });
+  }
+
+  async function showConfirm(message) {
+    const result = await Swal.fire({
+      icon: 'warning',
+      title: 'Confirmation',
+      text: message,
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes, delete it!',
+    });
+
+    return result.isConfirmed;
+  }
+
+  function populateEntitasForm(data) {
+    document.getElementById('kode_entitas').value = data.entitas.kode_entitas;
+    document.getElementById('nama_entitas').value = data.entitas.nama_entitas;
+    document.getElementById('telp_entitas').value = data.entitas.telp_entitas;
+    document.getElementById('alamat_entitas').value = data.entitas.alamat_entitas;
+    document.getElementById('email_entitas').value = data.entitas.email_entitas;
+    document.getElementById('informasi_tambahan_entitas').value = data.entitas.informasi_tambahan_entitas;
+
+    document.getElementById('nama_akun').value = data.saldoSetelahPenyesuaian[0].nama_akun;
+    document.getElementById('saldo_awal').value = data.saldoAwal
+
+
+    populateTipeEntitasDropdown();
+    // Mendapatkan elemen dropdown tipe_entitas
+    const tipeEntitasDropdown = document.getElementById('tipe_entitas');
+
+    // Mengatur opsi yang sesuai sebagai selected
+    for (let i = 0; i < tipeEntitasDropdown.options.length; i++) {
+      if (tipeEntitasDropdown.options[i].value === data.entitas.tipe_entitas) {
+        tipeEntitasDropdown.options[i].selected = true;
+        break;
+      }
+    }
+  }
+
+  function populateTipeEntitasDropdown() {
+    const dropdown = document.getElementById("tipe_entitas");
+
+    // Bersihkan opsi yang ada
+    dropdown.innerHTML = "";
+
+    // Tambahkan opsi baru dari array
+    tipeEntitasOptions.forEach(option => {
+      const newOption = document.createElement("option");
+      newOption.value = option.value;
+      newOption.text = option.text;
+      newOption.selected = option.selected || false;
+      newOption.disabled = option.disabled || false;
+      dropdown.appendChild(newOption);
+    });
+  }
+
+
+  function populateEntitasDetail(data) {
+    document.getElementById('detail_kode_entitas').innerText = data.kode_entitas;
+    document.getElementById('detail_nama_entitas').innerText = data.nama_entitas;
+    document.getElementById('detail_telp_entitas').innerText = data.telp_entitas;
+    document.getElementById('detail_alamat_entitas').innerText = data.alamat_entitas;
+    document.getElementById('detail_email_entitas').innerText = data.email_entitas;
+    document.getElementById('detail_informasi_tambahan_entitas').innerText = data.informasi_tambahan_entitas;
+    document.getElementById('detail_tipe_entitas').innerText = getTipeEntitasText(data.tipe_entitas);
+  }
+
+
+  function showLoadingOverlay() {
+  const overlay = document.createElement('div');
+  overlay.className = 'loading-overlay';
+  document.body.appendChild(overlay);
+  return overlay;
+}
+
+function hideLoadingOverlay(overlay) {
+  if (overlay) {
+    document.body.removeChild(overlay);
+  }
+}
+
+</script>
+
+<%- include('../../partials/footer') %>
