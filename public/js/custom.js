@@ -1,6 +1,42 @@
 const apiKey = 'f88fccc6204c03bf05fda50c698282e5'; // Ganti dengan API key yang sesuai
 const code = '00001'; // Ganti dengan API key yang sesuai
 
+const endpointEntitas = "http://117.53.45.122:3006/api/entitas";
+const endpointTransaksi = "http://117.53.45.122:3006/api/transaksi-keuangan";
+const endpointJenisTransaksi = "http://117.53.45.122:3006/api/jenis-transaksi";
+const endpointAkunKeuangan = "http://117.53.45.122:3006/api/akun-keuangan";
+
+const tipeTransaksiOptions = [
+  { value: "", text: "Pilih Tipe Transaksi", selected: true, disabled: true },
+  { value: "debit", text: "Debit" },
+  { value: "kredit", text: "Kredit" },
+];
+
+
+// Fungsi untuk mengambil teks berdasarkan nilai (value)
+function getTipeTransaksiText(value) {
+  const option = tipeTransaksiOptions.find(option => option.value === value);
+  return option ? option.text : null;
+}
+
+
+function populateTipeTransaksiDropdown() {
+  const dropdown = document.getElementById("tipe_transaksi");
+
+  // Bersihkan opsi yang ada
+  dropdown.innerHTML = "";
+
+  // Tambahkan opsi baru dari array
+  tipeTransaksiOptions.forEach(option => {
+    const newOption = document.createElement("option");
+    newOption.value = option.value;
+    newOption.text = option.text;
+    newOption.selected = option.selected || false;
+    newOption.disabled = option.disabled || false;
+    dropdown.appendChild(newOption);
+  });
+}
+
 
 function getCodeClientByApiKey(apiKey){
   // Fetch client data from the endpoint and populate the form
